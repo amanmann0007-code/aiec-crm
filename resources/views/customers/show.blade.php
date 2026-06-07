@@ -1,0 +1,621 @@
+@extends('layouts.app')
+
+@section('page-title', $customer->pid . ' — ' . $customer->name . ' — ' . $customer->country . ' — ' . $customer->visa_type . ' — ' . optional($customer->counselor)->name . ' — ' . optional($customer->telecaller)->name)
+
+@section('content')
+@if($canViewProcessTimeline)
+    <div class="card shadow-sm mb-3 process-timeline-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Process Timeline</span>
+            <span class="small text-muted">{{ $customer->visa_type ?? 'No visa type selected' }}</span>
+        </div>
+        <div class="card-body">
+            @if(count($processTimeline))
+                <div class="process-timeline-grid">
+                    @foreach($processTimeline as $step)
+                        @php
+                            $completed = $completedProcessSteps->get($step['key']);
+                            $isCompleted = (bool) $completed;
+                            $completeUrl = route('customers.process-steps.complete', [$customer, $step['key']]);
+                        @endphp
+
+                        <button type="button"
+                                class="process-step-tile {{ $isCompleted ? 'complete' : '' }}"
+                                data-complete-url="{{ $completeUrl }}"
+                                data-step-key="{{ $step['key'] }}"
+                                data-completed="{{ $isCompleted ? '1' : '0' }}"
+                                data-can-reopen="{{ $canReopenProcessTimeline ? '1' : '0' }}"
+                                data-confirm-complete="{{ auth()->user()->role === 'counselor' ? '1' : '0' }}"
+                                {{ (!$canCompleteProcessTimeline || ($isCompleted && !$canReopenProcessTimeline)) ? 'disabled' : '' }}>
+                            <span class="process-step-index">{{ $step['order'] }}</span>
+                            <span class="process-step-label">{{ $step['label'] }}</span>
+                            <span class="process-step-state">
+                                @if($isCompleted)
+                                    <i class="bi bi-check-lg"></i>
+                                    {{ optional($completed->completed_at)->format('d M Y') }}
+                                @else
+                                    Pending
+                                @endif
+                            </span>
+                        </button>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-muted small">No process timeline configured for this visa type yet.</div>
+            @endif
+        </div>
+    </div>
+@endif
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Customer Info</div>
+            <div class="card-body small">
+                @if(in_array(auth()->user()->role, ['admin', 'counselor'], true))
+                    <div class="mb-2">
+                        <a href="{{ route('customers.edit', $customer) }}" class="btn btn-sm btn-outline-primary">Edit Customer</a>
+                    </div>
+                @endif
+                <p><strong>PID:</strong> {{ $customer->pid }}</p>
+                <p><strong>Phone:</strong> {{ $customer->phone }}</p>
+                <p><strong>Email:</strong> {{ $customer->email ?? '—' }}</p>
+                <p><strong>DOB:</strong> {{ $customer->dob ?? '—' }}</p>
+                <p><strong>Gender:</strong> {{ $customer->gender ? ucfirst($customer->gender) : '—' }}</p>
+                <p><strong>Marital Status:</strong> {{ $customer->marital_status ? ucfirst($customer->marital_status) : '—' }}</p>
+                <p><strong>Father / Spouse:</strong> {{ $customer->father_spouse_name ?? '—' }}</p>
+                <p><strong>Residence:</strong>
+                    @if($customer->residence_country)
+                        @include('partials.country-flag', ['code' => $customer->residence_country])
+                    @else
+                        —
+                    @endif
+                </p>
+                <p><strong>Country (visa):</strong>
+                    @if($customer->country)
+                        @include('partials.country-flag', ['code' => $customer->country])
+                    @else
+                        —
+                    @endif
+                </p>
+                <p><strong>Visa:</strong> {{ $customer->visa_type ?? '—' }}</p>
+                <p><strong>Status:</strong> <span class="badge bg-primary">{{ $customer->status }}</span></p>
+                <p><strong>Counselor:</strong> {{ optional($customer->counselor)->name ?? '—' }}</p>
+                <p><strong>Telecaller:</strong> {{ optional($customer->telecaller)->name ?? '—' }}</p>
+                <p><strong>Qualification:</strong> {{ $customer->qualification ?? '—' }}</p>
+                <p><strong>Pass-out Year:</strong> {{ $customer->qualification_year ?? '—' }}</p>
+                <p><strong>GAP:</strong> {{ $customer->gap_years ?? '—' }}</p>
+                <p><strong>English Exam:</strong> {{ $customer->english_exam ?? '—' }}</p>
+                @if($customer->refusals->count())
+                    <p><strong>Refusals:</strong> {{ $customer->refusals->pluck('country')->join(', ') }}</p>
+                @endif
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">Documents</div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('customers.documents.store', $customer) }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-2">
+                        <label for="document_name" class="form-label small">Document name *</label>
+                        <input type="text" name="document_name" id="document_name" class="form-control form-control-sm @error('document_name') is-invalid @enderror" value="{{ old('document_name') }}" placeholder="Example: Passport, IELTS scorecard, Offer letter" required>
+                        @error('document_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <label for="document-upload-input" class="document-drop-zone mb-2" id="document-drop-zone">
+                        <input type="file" name="documents[]" id="document-upload-input" class="document-upload-input @error('documents') is-invalid @enderror @error('documents.*') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple required>
+                        <span class="document-drop-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                        <span class="document-drop-title">Drop files here or click to upload</span>
+                        <span class="document-drop-hint">Allowed: JPG, JPEG, PNG, PDF. Max 20 MB per file.</span>
+                        <span class="document-file-list text-muted" id="document-file-list">No files selected</span>
+                    </label>
+                    @error('documents')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                    @error('documents.*')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                    <button class="btn btn-sm btn-outline-primary">Upload</button>
+                </form>
+                <ul class="list-group list-group-flush mt-3">
+                    @forelse($customer->documents as $doc)
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <a href="{{ asset('storage/'.$doc->file_path) }}" target="_blank">{{ $doc->document_name }}</a>
+                            @if(auth()->user()->role === 'admin')
+                                <form method="POST" action="{{ route('documents.destroy', $doc) }}" onsubmit="return confirm('Delete?')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            @endif
+                        </li>
+                    @empty
+                        <li class="text-muted">No documents</li>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-3 remarks-card">
+            <div class="card-header">Remarks (Chat)</div>
+            <div class="card-body">
+                <div class="chat-box mb-3">
+                    @forelse($customer->remarks as $remark)
+                        <div class="chat-bubble {{ $remark->user_id === auth()->id() ? 'mine' : '' }}">
+                            <div class="small text-muted">{{ optional($remark->user)->name }} · {{ $remark->created_at }}</div>
+                            <div>
+                                @php
+                                    $msg = e($remark->message);
+                                    foreach ($remark->taggedUsers as $tagged) {
+                                        $fullNameMention = '@' . $tagged->name;
+                                        $msg = str_replace(e($fullNameMention), '<span class="mention-highlight">' . e($fullNameMention) . '</span>', $msg);
+
+                                        foreach ($tagged->mentionAliases() as $alias) {
+                                            $pattern = '/@' . preg_quote(e($alias), '/') . '\b/i';
+                                            $msg = preg_replace($pattern, '<span class="mention-highlight">$0</span>', $msg);
+                                        }
+                                    }
+                                @endphp
+                                {!! nl2br($msg) !!}
+                            </div>
+                            @if($remark->status_update)
+                                <div class="small mt-1"><span class="badge bg-info">Status: {{ $remark->status_update }}</span></div>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="text-muted mb-0">No remarks yet.</p>
+                    @endforelse
+                </div>
+                <form method="POST" action="{{ route('customers.remarks.store', $customer) }}" id="remark-form">
+                    @csrf
+                    <div class="mb-2 mention-wrap">
+                        <div class="mention-dropdown d-none"></div>
+                        <textarea name="message" id="remark-message" class="form-control" rows="2" placeholder="Type remark... use @ to tag someone" required autocomplete="off">{{ old('message') }}</textarea>
+                        <div class="tagged-user-ids"></div>
+                    </div>
+                    <div class="remark-actions-row">
+                        <div class="remark-col remark-col-status">
+                            <label for="status_update" class="form-label small">Select status</label>
+                            <select name="status_update" id="status_update" class="form-select remark-field-input">
+                                <option value="">—</option>
+                                @foreach(config('crm.remark_statuses', []) as $st)
+                                    <option value="{{ $st }}" {{ old('status_update') == $st ? 'selected' : '' }}>{{ $st }}</option>
+                                @endforeach
+                            </select>
+                            <small class="field-hint text-muted" aria-hidden="true">&nbsp;</small>
+                        </div>
+                        <div class="remark-col remark-col-followup">
+                            <label for="follow_up_date" class="form-label small">Next follow up</label>
+                            <input type="date" name="follow_up_date" id="follow_up_date" class="form-control remark-field-input"
+                                   value="{{ old('follow_up_date', now()->addDay()->format('Y-m-d')) }}">
+                            <small id="follow-up-hint" class="field-hint text-muted">Date only — defaults to tomorrow</small>
+                        </div>
+                        <div class="remark-col remark-col-send">
+                            <label class="form-label small remark-send-label">Send</label>
+                            <button type="submit" class="btn btn-primary remark-field-input w-100">Send</button>
+                            <small class="field-hint text-muted" aria-hidden="true">&nbsp;</small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Fees</div>
+            <div class="card-body">
+                @if($canAddFees)
+                    <form method="POST" action="{{ route('customers.fees.store', $customer) }}" class="fees-entry-form mb-3">
+                        @csrf
+                        <div class="fees-entry-field">
+                            <label for="fee_amount" class="form-label small">Amount</label>
+                            <input type="number" name="amount" id="fee_amount" class="form-control form-control-sm @error('amount') is-invalid @enderror" min="0.01" step="0.01" value="{{ old('amount') }}" required>
+                            @error('amount')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="fees-entry-field fees-purpose-field">
+                            <label for="fee_purpose" class="form-label small">Purpose</label>
+                            <input type="text" name="purpose" id="fee_purpose" class="form-control form-control-sm @error('purpose') is-invalid @enderror" value="{{ old('purpose') }}" placeholder="Example: Registration, Refund" required>
+                            @error('purpose')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="fees-entry-action">
+                            <label class="form-label small fees-entry-action-label">Add</label>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">Add</button>
+                        </div>
+                    </form>
+                @endif
+
+                @php($feesTotal = $customer->fees->sum(fn ($fee) => $fee->signedAmount()))
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0 fees-table">
+                        <thead>
+                            <tr>
+                                <th>Purpose</th>
+                                <th>Added By</th>
+                                <th>Date</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @forelse($customer->fees as $fee)
+                            @php($isRefund = $fee->isRefund())
+                            <tr class="{{ $isRefund ? 'fee-refund-row' : '' }}">
+                                <td>{{ $isRefund ? '- ' : '' }}{{ $fee->purpose }}</td>
+                                <td>{{ optional($fee->user)->name ?? '--' }}</td>
+                                <td>{{ optional($fee->created_at)->format('d M Y') }}</td>
+                                <td class="text-end fw-semibold">
+                                    {{ $isRefund ? '- ' : '' }}{{ number_format((float) $fee->amount, 2) }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="text-center text-muted py-3">No fees added yet.</td></tr>
+                        @endforelse
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="3" class="text-end">Total</th>
+                                <th class="text-end">{{ number_format($feesTotal, 2) }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @if(auth()->user()->role === 'admin')
+        <div class="card shadow-sm">
+            <div class="card-header">Activity Log</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @forelse($activityLogs as $log)
+                        <li class="list-group-item small">
+                            <strong>{{ $log->action_type }}</strong> — {{ $log->display_description }}
+                            <span class="text-muted">· {{ optional($log->user)->name }} · {{ $log->created_at }}</span>
+                        </li>
+                    @empty
+                        <li class="list-group-item text-muted">No activity yet.</li>
+                    @endforelse
+                </ul>
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
+@endsection
+
+@push('styles')
+<style>
+.remark-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .75rem;
+}
+.remarks-card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+.remarks-card #remark-form {
+    order: 1;
+}
+.remarks-card .chat-box {
+    order: 2;
+    margin-top: 1rem;
+    margin-bottom: 0 !important;
+}
+.remark-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+.remark-col-status { flex: 1.4 1 180px; }
+.remark-col-followup { flex: 1.1 1 160px; }
+.remark-col-send { flex: 0 0 110px; }
+.remark-col .form-label {
+    margin-bottom: .35rem;
+    line-height: 1.2;
+    min-height: 1.2rem;
+}
+.remark-col-send .remark-send-label {
+    visibility: hidden;
+}
+.remark-field-input {
+    height: 38px;
+    min-height: 38px;
+}
+.remark-col .field-hint {
+    display: block;
+    min-height: 1.125rem;
+    margin-top: .35rem;
+    font-size: .75rem;
+    line-height: 1.125rem;
+}
+.document-drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    min-height: 150px;
+    padding: 1rem;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, color .15s;
+}
+.document-drop-zone.drag-over {
+    border-color: var(--aiec-blue);
+    background: #eef6ff;
+    color: #1e40af;
+}
+.document-upload-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+.document-drop-icon {
+    font-size: 1.6rem;
+    color: var(--aiec-blue);
+}
+.document-drop-title {
+    font-weight: 700;
+    color: #0f172a;
+}
+.document-drop-hint,
+.document-file-list {
+    font-size: .78rem;
+}
+.document-file-list {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fees-entry-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .75rem;
+}
+.fees-entry-field {
+    flex: 1 1 180px;
+}
+.fees-purpose-field {
+    flex: 2 1 260px;
+}
+.fees-entry-action {
+    flex: 0 0 110px;
+}
+.fees-entry-action-label {
+    visibility: hidden;
+}
+.fees-table tfoot th {
+    border-top: 2px solid #cbd5e1;
+    background: #f8fafc;
+}
+.fee-refund-row td {
+    color: #dc3545;
+}
+.process-timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .75rem;
+}
+.process-timeline-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(100deg, #ffffff, #eef6ff, #f3fbf7, #fff7ed, #ffffff);
+    background-size: 300% 100%;
+    animation: processTimelineGlow 8s ease-in-out infinite;
+}
+.process-timeline-card .card-header,
+.process-timeline-card .card-body {
+    position: relative;
+    z-index: 1;
+    background: transparent;
+}
+@keyframes processTimelineGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.process-step-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .25rem;
+    min-height: 96px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: .75rem;
+    background: #f8fafc;
+    color: #334155;
+    text-align: left;
+}
+.process-step-tile:not(:disabled):hover {
+    border-color: var(--aiec-blue);
+    background: #eef6ff;
+}
+.process-step-tile.complete {
+    border-color: #198754;
+    background: #e8f5ee;
+    color: #146c43;
+}
+.process-step-tile:disabled {
+    cursor: default;
+    opacity: 1;
+}
+.process-step-index {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 700;
+}
+.process-step-tile.complete .process-step-index {
+    background: #198754;
+    color: #fff;
+}
+.process-step-label {
+    font-weight: 600;
+    line-height: 1.2;
+}
+.process-step-state {
+    margin-top: auto;
+    font-size: .75rem;
+    color: inherit;
+}
+@media (max-width: 767.98px) {
+    .remark-col { flex: 1 1 100%; }
+    .remark-col-send { flex: 1 1 100%; }
+}
+</style>
+@endpush
+
+@push('scripts')
+<script src="{{ asset('js/mention-autocomplete.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const textarea = document.getElementById('remark-message');
+    if (textarea) {
+        initMentionAutocomplete(textarea, {
+            searchUrl: '{{ route('users.mention-search') }}'
+        });
+    }
+
+    const documentDropZone = document.getElementById('document-drop-zone');
+    const documentUploadInput = document.getElementById('document-upload-input');
+    const documentFileList = document.getElementById('document-file-list');
+
+    function updateDocumentFileList() {
+        if (!documentUploadInput || !documentFileList) return;
+
+        const files = Array.from(documentUploadInput.files || []);
+        documentFileList.textContent = files.length
+            ? files.map(file => file.name).join(', ')
+            : 'No files selected';
+    }
+
+    if (documentDropZone && documentUploadInput) {
+        ['dragenter', 'dragover'].forEach(eventName => {
+            documentDropZone.addEventListener(eventName, event => {
+                event.preventDefault();
+                documentDropZone.classList.add('drag-over');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            documentDropZone.addEventListener(eventName, event => {
+                event.preventDefault();
+                documentDropZone.classList.remove('drag-over');
+            });
+        });
+
+        documentDropZone.addEventListener('drop', event => {
+            documentUploadInput.files = event.dataTransfer.files;
+            updateDocumentFileList();
+        });
+
+        documentUploadInput.addEventListener('change', updateDocumentFileList);
+    }
+
+    const statusSelect = document.getElementById('status_update');
+    const followUpInput = document.getElementById('follow_up_date');
+    const followUpHint = document.getElementById('follow-up-hint');
+    const requiresFollowUp = @json(config('crm.statuses_requiring_follow_up'));
+    const noFollowUp = @json(config('crm.statuses_no_follow_up'));
+    const tomorrowDefault = '{{ now()->addDay()->format('Y-m-d') }}';
+
+    function updateFollowUpRequirement() {
+        if (!statusSelect || !followUpInput) return;
+
+        const status = statusSelect.value;
+        const isRequired = requiresFollowUp.includes(status);
+        const isOptional = !status || noFollowUp.includes(status);
+
+        followUpInput.required = isRequired;
+
+        if (noFollowUp.includes(status)) {
+            followUpInput.value = '';
+            followUpInput.disabled = true;
+            followUpHint.textContent = 'Not required for this status';
+        } else {
+            followUpInput.disabled = false;
+            if (!followUpInput.value) {
+                followUpInput.value = tomorrowDefault;
+            }
+            if (isRequired) {
+                followUpHint.textContent = 'Required for this status';
+            } else if (isOptional) {
+                followUpHint.textContent = 'Date only — defaults to tomorrow';
+            } else {
+                followUpHint.textContent = 'Date only — defaults to tomorrow';
+            }
+        }
+    }
+
+    statusSelect?.addEventListener('change', updateFollowUpRequirement);
+    updateFollowUpRequirement();
+
+    document.querySelectorAll('.process-step-tile:not(:disabled)').forEach((tile) => {
+        tile.addEventListener('click', () => {
+            const url = tile.dataset.completeUrl;
+            const isCompleted = tile.dataset.completed === '1';
+            const canReopen = tile.dataset.canReopen === '1';
+            if (!url || (isCompleted && !canReopen)) {
+                return;
+            }
+
+            if (!isCompleted && tile.dataset.confirmComplete === '1' && !confirm('Mark this process step as completed? This cannot be changed back by counselor.')) {
+                return;
+            }
+
+            tile.disabled = true;
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Could not complete step');
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    const state = tile.querySelector('.process-step-state');
+                    if (!data.completed) {
+                        tile.classList.remove('complete');
+                        tile.dataset.completed = '0';
+                        if (state) {
+                            state.textContent = 'Pending';
+                        }
+                        tile.disabled = false;
+                        return;
+                    }
+
+                    tile.classList.add('complete');
+                    tile.dataset.completed = '1';
+                    if (state) {
+                        const date = data.completed_at ? data.completed_at.slice(0, 10) : 'Completed';
+                        state.innerHTML = '<i class="bi bi-check-lg"></i> ' + date;
+                    }
+                    tile.disabled = tile.dataset.canReopen !== '1';
+                })
+                .catch(() => {
+                    tile.disabled = false;
+                    alert('Could not complete this process step. Please try again.');
+                });
+        });
+    });
+});
+</script>
+@endpush

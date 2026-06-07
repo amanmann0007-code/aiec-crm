@@ -1,0 +1,64 @@
+[{
+	"resource": "/C:/wamp64/www/aiec-crm/vendor/laravel/framework/src/Illuminate/Database/Connection.php",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": "PHP0405",
+	"severity": 4,
+	"message": "'getDefaultSchemaGrammar': not all code paths return a value",
+	"source": "PHP",
+	"startLineNumber": 259,
+	"startColumn": 24,
+	"endLineNumber": 259,
+	"endColumn": 47,
+	"modelVersionId": 1
+},{
+	"resource": "/C:/wamp64/www/aiec-crm/vendor/laravel/framework/src/Illuminate/Database/Connection.php",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": "PHP0418",
+	"severity": 4,
+	"message": "Call to unknown method: Illuminate\\Database\\Connection::getDoctrineDriver()",
+	"source": "PHP",
+	"startLineNumber": 997,
+	"startColumn": 23,
+	"endLineNumber": 997,
+	"endColumn": 40,
+	"modelVersionId": 1
+},{
+	"resource": "/C:/wamp64/www/aiec-crm/vendor/laravel/framework/src/Illuminate/Database/Connection.php",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": "PHP0418",
+	"severity": 4,
+	"message": "Call to unknown method: Illuminate\\Database\\Connection::getDoctrineDriver()",
+	"source": "PHP",
+	"startLineNumber": 1011,
+	"startColumn": 30,
+	"endLineNumber": 1011,
+	"endColumn": 47,
+	"modelVersionId": 1
+},{
+	"resource": "/C:/wamp64/www/aiec-crm/vendor/laravel/framework/src/Illuminate/Database/Connection.php",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": "PHP0413",
+	"severity": 4,
+	"message": "Use of unknown class: 'Doctrine\\DBAL\\DBALException'",
+	"source": "PHP",
+	"startLineNumber": 1038,
+	"startColumn": 16,
+	"endLineNumber": 1038,
+	"endColumn": 44,
+	"modelVersionId": 1
+},{
+	"resource": "/C:/wamp64/www/aiec-crm/vendor/laravel/framework/src/Illuminate/Database/Connection.php",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": "PHP6406",
+	"severity": 2,
+	"message": "Function 'listTableDetails' has been deprecated. Use {@see introspectTable()} instead.\n",
+	"source": "PHP",
+	"startLineNumber": 984,
+	"startColumn": 25,
+	"endLineNumber": 984,
+	"endColumn": 41,
+	"tags": [
+		2
+	],
+	"modelVersionId": 1
+}]
