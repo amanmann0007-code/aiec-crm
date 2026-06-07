@@ -1,64 +1,254 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# AIEC CRM
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+AIEC CRM is a Laravel 8 customer relationship management system for immigration and education consultancy workflows. It manages leads, customers, counselor assignment, follow-ups, process timelines, remarks, fees, documents, bell notifications, Google Chat notifications, and public customer self-entry forms.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP `^7.3|^8.0`
+- Laravel `^8.75`
+- MySQL or MariaDB
+- Bootstrap UI with local vendor assets
+- Laravel Sanctum for API authentication
+- Google Chat webhook integration
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Main Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Role-based CRM for `admin`, `director`, `receptionist`, `counselor`, and `telecaller`.
+- Customer and lead management with assignment to counselor and/or telecaller.
+- Public customer entry form at `/customer-entry` for customers to submit their own details without logging in.
+- Receptionist review queue called **Tab Entries** for converting public submissions into assigned customers.
+- Telecaller lead flow with **Visiting Client** queue.
+- New case queue with badge counters.
+- Follow-up dashboard and My Follow-Ups pages with overdue/today/upcoming separation.
+- Customer remarks chat with `@user` tagging, status updates, and latest remarks first.
+- Custom bell notifications with sound and customer deep links.
+- Google Chat notifications with admin-controlled checkbox settings.
+- Admin-managed process timelines by visa type.
+- Customer process tiles with completion status and Dropout automation.
+- Customer document uploads with drag-and-drop and mandatory document names.
+- Customer fees ledger with collected, refund, and net total calculations.
+- Dashboard status/process charts, date filters, quick ranges, and admin-only fee totals.
+- Global quick search and deep search across customer details, remarks, status, and process timelines.
 
-## Learning Laravel
+## Role Overview
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Admin
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Full dashboard visibility.
+- User management.
+- Process timeline management.
+- Qualification management.
+- Google Chat notification settings.
+- Customer create/edit access.
+- Activity logs.
+- Fee totals on dashboard.
 
-## Laravel Sponsors
+### Director
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+- Customer visibility and process timeline controls.
+- Can reopen completed process tiles.
+- Can create customers.
 
-### Premium Partners
+### Receptionist
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+- Can create customers.
+- Reviews **Tab Entries** from the public customer entry form.
+- Reviews **Visiting Client** leads and marks them Ready.
+- Sees dashboard stats broadly like admin, without admin-only settings.
 
-## Contributing
+### Counselor
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Sees assigned customers.
+- Can edit assigned customer info.
+- Can add remarks, fees, follow-ups, documents, and complete process tiles.
 
-## Code of Conduct
+### Telecaller
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Can add leads.
+- Lead status options are limited to `will visit` and `interested`.
+- Sees own **Visiting Client** leads without the Ready button.
+- Does not see fee-entry controls.
 
-## Security Vulnerabilities
+## Local Setup
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. Install PHP dependencies:
 
-## License
+```bash
+composer install
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2. Copy the environment file:
+
+```bash
+copy .env.example .env
+```
+
+3. Generate the app key:
+
+```bash
+php artisan key:generate
+```
+
+4. Configure database settings in `.env`:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=aiec_crm
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+5. Run migrations:
+
+```bash
+php artisan migrate
+```
+
+6. Create the storage symlink:
+
+```bash
+php artisan storage:link
+```
+
+7. Build/refresh app caches after configuration changes:
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+## Running Locally
+
+If the project is served through WAMP under `C:\wamp64\www\aiec-crm`, use:
+
+```text
+http://localhost/aiec-crm/public
+```
+
+If your virtual host points directly to the Laravel `public` directory, use:
+
+```text
+http://localhost
+```
+
+## Public Customer Entry Link
+
+Customers can submit their own details without logging in:
+
+```text
+http://localhost/aiec-crm/public/customer-entry
+```
+
+With a virtual host pointed to `public`:
+
+```text
+http://localhost/customer-entry
+```
+
+Submitted entries appear for receptionist under **Tab Entries**. Receptionist can click **Submit**, review/edit the prefilled customer form, and assign counselor or telecaller.
+
+## Google Chat Notifications
+
+Set the webhook in `.env`:
+
+```env
+GOOGLE_CHAT_WEBHOOK=
+GOOGLE_CHAT_VERIFY_SSL=false
+```
+
+Admin can control what is allowed to send to Google Chat from:
+
+```text
+Google Chat
+```
+
+Available settings include:
+
+- Remarks and status updates
+- New case assigned
+- Customer updated
+- User tagged in remark
+- Follow-up reminder
+- Other bell notifications
+- Activity logs
+
+Unchecked notification types still remain inside CRM bell notifications, but they do not post to Google Chat.
+
+## Realtime Notifications
+
+The CRM uses a custom polling-based notification system rather than Pusher. Bell notifications:
+
+- Show unread badge counts.
+- Play a notification sound.
+- Open the related customer page when clicked.
+- Can be mirrored to Google Chat based on admin settings.
+
+## Customer Process Timelines
+
+Admin can configure process tiles per visa type from **Process Timelines**.
+
+Process behavior:
+
+- Counselor, director, and admin can complete process tiles.
+- Counselor completion asks for confirmation.
+- Only admin and director can reopen a completed tile.
+- `plan drop` and `not eligible` automatically complete the `Dropout` process.
+- Dashboard process chart counts the latest process stage per customer, including `Not started`.
+
+## Fees
+
+Customer pages include a **Fees** section under remarks:
+
+- Any non-telecaller user can add fees.
+- Entry requires amount and purpose.
+- Purpose containing `refund` is treated as a refund.
+- Refunds display with a minus sign and subtract from totals.
+- Fee/refund entries also appear in the remarks chat.
+- Admin dashboard shows date-filtered collected, refund, and net fees.
+
+## Documents
+
+Customer documents support drag-and-drop upload.
+
+Allowed file types:
+
+- JPG
+- JPEG
+- PNG
+- PDF
+
+Each upload requires a document name for future retrieval.
+
+## Useful Artisan Commands
+
+```bash
+php artisan migrate
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan test
+```
+
+## Testing
+
+Run:
+
+```bash
+php artisan test
+```
+
+Current smoke tests include:
+
+- Unit example test
+- Root redirects guest users to login
+
+## Notes
+
+- Do not commit `.env`.
+- Keep `APP_URL` aligned with your WAMP or virtual host URL.
+- Run `php artisan config:cache` after changing `.env` or `config/*.php`.
+- Run `php artisan route:cache` after adding or changing routes.
+- Run `php artisan view:cache` after Blade changes when deploying locally.
