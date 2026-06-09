@@ -11,7 +11,22 @@
         </div>
         <div class="card-body">
             @if(count($processTimeline))
-                <div class="process-timeline-grid">
+                @php
+                    $totalTimelineSteps = count($processTimeline);
+                    $completedTimelineCount = collect($processTimeline)
+                        ->filter(fn ($step) => $completedProcessSteps->has($step['key']))
+                        ->count();
+                    $timelineProgressPercent = $totalTimelineSteps ? round(($completedTimelineCount / $totalTimelineSteps) * 100) : 0;
+                @endphp
+                <div class="process-timeline-progress {{ $timelineProgressPercent ? '' : 'no-progress' }}"
+                     data-total-steps="{{ $totalTimelineSteps }}"
+                     style="--process-progress: {{ $timelineProgressPercent }}%;">
+                    <div class="process-progress-track" aria-hidden="true">
+                        <span class="process-progress-fill">
+                            <span class="process-progress-arrow"><i class="bi bi-arrow-right"></i></span>
+                        </span>
+                    </div>
+                    <div class="process-timeline-grid">
                     @foreach($processTimeline as $step)
                         @php
                             $completed = $completedProcessSteps->get($step['key']);
@@ -39,6 +54,7 @@
                             </span>
                         </button>
                     @endforeach
+                    </div>
                 </div>
             @else
                 <div class="text-muted small">No process timeline configured for this visa type yet.</div>
@@ -396,11 +412,6 @@
 .fee-refund-row td {
     color: #dc3545;
 }
-.process-timeline-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: .75rem;
-}
 .process-timeline-card {
     position: relative;
     overflow: hidden;
@@ -419,26 +430,75 @@
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
+.process-timeline-progress {
+    position: relative;
+    padding: .35rem 0 .15rem;
+}
+.process-progress-track {
+    position: absolute;
+    top: 31px;
+    left: 56px;
+    right: 56px;
+    height: 8px;
+    border-radius: 999px;
+    background: #dbe3ec;
+    overflow: hidden;
+    z-index: 0;
+}
+.process-progress-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--process-progress);
+    min-width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #16a34a, #22c55e, #0ea5e9);
+    transition: width .25s ease;
+}
+.process-progress-arrow {
+    position: absolute;
+    right: -11px;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    transform: translateY(-50%);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #0ea5e9;
+    color: #fff;
+    font-size: .8rem;
+    box-shadow: 0 3px 8px rgba(14, 165, 233, .24);
+}
+.process-timeline-progress.no-progress .process-progress-arrow {
+    display: none;
+}
+.process-timeline-grid {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0 .25rem .35rem;
+}
 .process-step-tile {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: .25rem;
-    min-height: 96px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: .75rem;
-    background: #f8fafc;
+    align-items: center;
+    gap: .45rem;
+    flex: 0 0 128px;
+    min-height: 116px;
+    border: 0;
+    padding: 0 .25rem;
+    background: transparent;
     color: #334155;
-    text-align: left;
+    text-align: center;
 }
 .process-step-tile:not(:disabled):hover {
-    border-color: var(--aiec-blue);
-    background: #eef6ff;
+    color: var(--aiec-blue);
 }
 .process-step-tile.complete {
-    border-color: #198754;
-    background: #e8f5ee;
     color: #146c43;
 }
 .process-step-tile:disabled {
@@ -446,16 +506,23 @@
     opacity: 1;
 }
 .process-step-index {
-    width: 24px;
-    height: 24px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #e2e8f0;
+    border: 4px solid #fff;
+    background: #dbe3ec;
     color: #475569;
-    font-size: .75rem;
+    font-size: .95rem;
     font-weight: 700;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, .14);
+    transition: background .2s, color .2s, transform .2s;
+}
+.process-step-tile:not(:disabled):hover .process-step-index {
+    transform: translateY(-2px);
+    background: #cfe8ff;
 }
 .process-step-tile.complete .process-step-index {
     background: #198754;
@@ -464,11 +531,16 @@
 .process-step-label {
     font-weight: 600;
     line-height: 1.2;
+    max-width: 128px;
+    min-height: 2.35rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
 }
 .process-step-state {
-    margin-top: auto;
     font-size: .75rem;
     color: inherit;
+    min-height: 1.2rem;
 }
 @media (max-width: 767.98px) {
     .remark-col { flex: 1 1 100%; }
@@ -562,6 +634,18 @@ document.addEventListener('DOMContentLoaded', function () {
     statusSelect?.addEventListener('change', updateFollowUpRequirement);
     updateFollowUpRequirement();
 
+    function refreshTimelineProgress(tile) {
+        const timeline = tile.closest('.process-timeline-progress');
+        if (!timeline) return;
+
+        const total = Number(timeline.dataset.totalSteps || 0);
+        const completed = timeline.querySelectorAll('.process-step-tile[data-completed="1"]').length;
+        const progress = total ? Math.round((completed / total) * 100) : 0;
+
+        timeline.style.setProperty('--process-progress', progress + '%');
+        timeline.classList.toggle('no-progress', progress === 0);
+    }
+
     document.querySelectorAll('.process-step-tile:not(:disabled)').forEach((tile) => {
         tile.addEventListener('click', () => {
             const url = tile.dataset.completeUrl;
@@ -598,6 +682,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (state) {
                             state.textContent = 'Pending';
                         }
+                        refreshTimelineProgress(tile);
                         tile.disabled = false;
                         return;
                     }
@@ -608,6 +693,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const date = data.completed_at ? data.completed_at.slice(0, 10) : 'Completed';
                         state.innerHTML = '<i class="bi bi-check-lg"></i> ' + date;
                     }
+                    refreshTimelineProgress(tile);
                     tile.disabled = tile.dataset.canReopen !== '1';
                 })
                 .catch(() => {

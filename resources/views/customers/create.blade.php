@@ -47,7 +47,7 @@
             @if($entry)
                 <input type="hidden" name="entry_id" value="{{ $entry->id }}">
                 <div class="alert alert-info py-2">
-                    Reviewing tab entry from <strong>{{ $entry->name }}</strong>. Assign a counselor or telecaller before saving.
+                    Reviewing tab entry from <strong>{{ $entry->name }}</strong>. Assign a counselor before saving.
                 </div>
             @endif
 
@@ -208,7 +208,7 @@
                         <input name="reference_name" class="form-control" value="{{ old('reference_name') }}">
                     </div>
                     <div class="col-md-4" id="telecaller-wrap">
-                        <label class="form-label">Telecaller <span class="text-muted small">(required if no counselor)</span></label>
+                        <label class="form-label">Telecaller</label>
                         <select name="telecaller_id" class="form-select">
                             <option value="">—</option>
                             @foreach($telecallers as $t)
@@ -217,13 +217,16 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Assign Counselor <span class="text-muted small">(required if no telecaller)</span></label>
-                        <select name="assigned_counselor_id" class="form-select">
+                        <label class="form-label">Assign Counselor *</label>
+                        <select name="assigned_counselor_id" class="form-select @error('assigned_counselor_id') is-invalid @enderror" required>
                             <option value="">—</option>
                             @foreach($counselors as $c)
                                 <option value="{{ $c->id }}" {{ old('assigned_counselor_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
+                        @error('assigned_counselor_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
             </div>

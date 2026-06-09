@@ -49,7 +49,7 @@ class StoreCustomerRequest extends FormRequest
             'country' => ['required', Rule::in(array_keys(config('crm.countries')))],
             'source' => 'nullable|string|max:255',
             'reference_name' => 'nullable|string|max:255',
-            'telecaller_id' => ['nullable', 'required_without:assigned_counselor_id', 'exists:users,id'],
+            'telecaller_id' => ['nullable', 'exists:users,id'],
             'english_test' => 'nullable|in:yes,no',
             'test_type' => 'nullable|string|max:255',
             'listening' => 'nullable|numeric',
@@ -61,7 +61,7 @@ class StoreCustomerRequest extends FormRequest
             'previous_refusal' => 'nullable|in:yes,no',
             'refusal_countries' => 'nullable|array',
             'refusal_countries.*' => 'string|max:255',
-            'assigned_counselor_id' => ['nullable', 'required_without:telecaller_id', 'exists:users,id'],
+            'assigned_counselor_id' => ['required', 'exists:users,id'],
             'status' => ['nullable', Rule::in(config('crm.customer_statuses', []))],
         ];
     }
@@ -70,8 +70,7 @@ class StoreCustomerRequest extends FormRequest
     {
         return [
             'phone.unique' => 'Phone is already registered.',
-            'assigned_counselor_id.required_without' => 'Assign either a counselor or a telecaller.',
-            'telecaller_id.required_without' => 'Assign either a counselor or a telecaller.',
+            'assigned_counselor_id.required' => 'Select a counselor before creating the customer.',
         ];
     }
 
