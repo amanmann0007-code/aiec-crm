@@ -70,6 +70,7 @@
                     <th><a href="{{ $sortUrl('visa_type') }}" class="sortable-heading {{ $currentSort === 'visa_type' ? 'active' : '' }}">Visa <i class="bi {{ $sortIcon('visa_type') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('process') }}" class="sortable-heading {{ $currentSort === 'process' ? 'active' : '' }}">Process <i class="bi {{ $sortIcon('process') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('status') }}" class="sortable-heading {{ $currentSort === 'status' ? 'active' : '' }}">Status <i class="bi {{ $sortIcon('status') }}"></i></a></th>
+                    <th><a href="{{ $sortUrl('follow_up') }}" class="sortable-heading {{ $currentSort === 'follow_up' ? 'active' : '' }}">Next Follow Up <i class="bi {{ $sortIcon('follow_up') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('counselor') }}" class="sortable-heading {{ $currentSort === 'counselor' ? 'active' : '' }}">Counselor <i class="bi {{ $sortIcon('counselor') }}"></i></a></th>
                 </tr>
             </thead>
@@ -77,6 +78,21 @@
             @forelse($customers as $c)
                 @php
                     $latestProcessStep = $c->processSteps->first();
+                    $nextFollowUp = $c->nextFollowUp;
+                    $nextFollowUpDate = $nextFollowUp && $nextFollowUp->follow_up_date
+                        ? \Carbon\Carbon::parse($nextFollowUp->follow_up_date)
+                        : null;
+                    $today = \Carbon\Carbon::today();
+                    $followUpBadgeClass = 'bg-light text-muted border';
+                    if ($nextFollowUpDate) {
+                        if ($nextFollowUpDate->lt($today)) {
+                            $followUpBadgeClass = 'bg-danger';
+                        } elseif ($nextFollowUpDate->isSameDay($today)) {
+                            $followUpBadgeClass = 'bg-warning text-dark';
+                        } else {
+                            $followUpBadgeClass = 'bg-success';
+                        }
+                    }
                     $strikeStatuses = ['plan drop', 'jfi', 'not eligible'];
                     $shouldStrikeCustomer = in_array(strtolower((string) $c->status), $strikeStatuses, true)
                         || strtolower((string) optional($latestProcessStep)->step_label) === 'dropout';
@@ -95,10 +111,17 @@
                         @endif
                     </td>
                     <td><span class="badge bg-secondary">{{ $c->status }}</span></td>
+                    <td>
+                        @if($nextFollowUpDate)
+                            <span class="badge {{ $followUpBadgeClass }}">{{ $nextFollowUpDate->format('d M Y') }}</span>
+                        @else
+                            <span class="badge {{ $followUpBadgeClass }}">--</span>
+                        @endif
+                    </td>
                     <td>{{ optional($c->counselor)->name ?? '--' }}</td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="text-center text-muted py-4">{{ $emptyMessage ?? 'No customers found.' }}</td></tr>
+                <tr><td colspan="9" class="text-center text-muted py-4">{{ $emptyMessage ?? 'No customers found.' }}</td></tr>
             @endforelse
             </tbody>
         </table>

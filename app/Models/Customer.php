@@ -73,6 +73,14 @@ class Customer extends Model
         return $this->hasMany(FollowUp::class);
     }
 
+    public function nextFollowUp()
+    {
+        return $this->hasOne(FollowUp::class)
+            ->where('status', 'pending')
+            ->whereNotNull('follow_up_date')
+            ->orderBy('follow_up_date');
+    }
+
     public function documents()
     {
         return $this->hasMany(Document::class);

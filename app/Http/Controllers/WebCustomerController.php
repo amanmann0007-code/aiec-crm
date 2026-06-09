@@ -396,6 +396,7 @@ class WebCustomerController extends Controller
         $user = Auth::user();
         $query = Customer::with([
             'counselor',
+            'nextFollowUp',
             'processSteps' => function ($processQuery) {
                 $processQuery->whereNotNull('completed_at')
                     ->orderByDesc('step_order')
@@ -414,7 +415,7 @@ class WebCustomerController extends Controller
 
     private function customerSort(Request $request): array
     {
-        $allowedColumns = ['pid', 'name', 'phone', 'country', 'visa_type', 'process', 'status', 'counselor'];
+        $allowedColumns = ['pid', 'name', 'phone', 'country', 'visa_type', 'process', 'status', 'follow_up', 'counselor'];
         $sortColumn = $request->query('sort', 'latest');
         $sortDirection = strtolower((string) $request->query('direction', 'desc'));
 
@@ -449,6 +450,24 @@ class WebCustomerController extends Controller
             )";
 
             $query->orderByRaw("COALESCE({$latestProcessLabelSql}, 'Not started') {$sortDirection}")
+                ->orderBy('customers.id', 'desc');
+
+            return;
+        }
+
+        if ($sortColumn === 'follow_up') {
+            $nextFollowUpSql = "(
+                SELECT fu_latest.follow_up_date
+                FROM follow_ups as fu_latest
+                WHERE fu_latest.customer_id = customers.id
+                    AND fu_latest.status = 'pending'
+                    AND fu_latest.follow_up_date IS NOT NULL
+                ORDER BY fu_latest.follow_up_date ASC, fu_latest.id ASC
+                LIMIT 1
+            )";
+
+            $query->orderByRaw("{$nextFollowUpSql} IS NULL ASC")
+                ->orderByRaw("{$nextFollowUpSql} {$sortDirection}")
                 ->orderBy('customers.id', 'desc');
 
             return;
