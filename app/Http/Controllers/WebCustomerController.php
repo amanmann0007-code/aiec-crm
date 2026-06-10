@@ -17,6 +17,7 @@ use App\Services\ActivityLogger;
 use App\Services\PidGenerator;
 use App\Services\ProcessTimelineService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -151,6 +152,7 @@ class WebCustomerController extends Controller
                 'country' => $validated['country'],
                 'visa_type' => $validated['visa_type'],
                 'status' => $validated['status'],
+                'visit_date' => $validated['status'] === 'will visit' ? $validated['visit_date'] : null,
                 'telecaller_id' => Auth::id(),
                 'created_by' => Auth::id(),
                 'source' => 'Telecaller',
@@ -337,6 +339,37 @@ class WebCustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', 'Customer updated successfully.');
     }
 
+    public function updateIntake(Request $request, Customer $customer)
+    {
+        $this->authorizeIntake($customer);
+
+        $validated = $request->validate([
+            'intake_month' => ['required', 'integer', 'between:1,12'],
+            'intake_year' => ['required', 'integer', 'between:' . now()->year . ',' . (now()->year + 20)],
+        ]);
+
+        $selected = Carbon::create((int) $validated['intake_year'], (int) $validated['intake_month'], 1)->startOfMonth();
+        $current = now()->startOfMonth();
+
+        if ($selected->lt($current)) {
+            return back()->withErrors(['intake_month' => 'Intake cannot be earlier than the current month.'])->withInput();
+        }
+
+        $customer->update([
+            'intake_month' => (int) $validated['intake_month'],
+            'intake_year' => (int) $validated['intake_year'],
+        ]);
+
+        ActivityLogger::log(
+            Auth::id(),
+            'UPDATE_INTAKE',
+            'Updated intake for ' . $customer->activitySummary() . ' to ' . $selected->format('M Y'),
+            $customer->id
+        );
+
+        return redirect()->route('customers.show', $customer)->with('success', 'Intake updated.');
+    }
+
     public function show(Customer $customer)
     {
         $this->authorizeCustomer($customer);
@@ -373,6 +406,8 @@ class WebCustomerController extends Controller
         $canCompleteProcessTimeline = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true);
         $canReopenProcessTimeline = in_array(Auth::user()->role, ['admin', 'director'], true);
         $canAddFees = Auth::user()->role !== 'telecaller';
+        $canManageIntake = in_array(Auth::user()->role, ['admin', 'director'], true)
+            || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id());
 
         return view('customers.show', compact(
             'customer',
@@ -382,7 +417,8 @@ class WebCustomerController extends Controller
             'canViewProcessTimeline',
             'canCompleteProcessTimeline',
             'canReopenProcessTimeline',
-            'canAddFees'
+            'canAddFees',
+            'canManageIntake'
         ));
     }
 
@@ -698,6 +734,25 @@ class WebCustomerController extends Controller
             return;
         }
         if (Notification::where('user_id', $user->id)->where('customer_id', $customer->id)->exists()) {
+            return;
+        }
+
+        abort(403);
+    }
+
+    private function authorizeIntake(Customer $customer): void
+    {
+        $user = Auth::user();
+
+        if (!$user || !in_array($user->role, ['admin', 'director', 'counselor'], true)) {
+            abort(403);
+        }
+
+        if (in_array($user->role, ['admin', 'director'], true)) {
+            return;
+        }
+
+        if ($user->role === 'counselor' && $customer->assigned_counselor_id === $user->id) {
             return;
         }
 

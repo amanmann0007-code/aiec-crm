@@ -248,7 +248,7 @@
     <aside class="sidebar p-3 text-white">
         <div class="sidebar-crm-label">Menu</div>
         <nav class="d-flex flex-column gap-1">
-            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
+            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Report</a>
             @if(in_array(auth()->user()->role, ['receptionist', 'telecaller'], true))
                 <a href="{{ route('visiting-clients.index') }}" class="sidebar-link-with-badge {{ request()->routeIs('visiting-clients.*') ? 'active' : '' }}">
                     <span>Visiting Client</span>
@@ -321,7 +321,7 @@
             <div id="search-results-mobile" class="search-results list-group shadow d-none"></div>
         </div>
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-            <h4 class="mb-0">@yield('page-title', 'Dashboard')</h4>
+            <h4 class="mb-0">@yield('page-title', 'Report')</h4>
             @hasSection('page-actions')
                 <div>@yield('page-actions')</div>
             @endif
@@ -337,11 +337,79 @@
         @yield('content')
     </main>
 </div>
+@php
+    $followUpPopupItems = collect($todayFollowUpPopupItems ?? []);
+    $visitPopupItems = collect($todayVisitPopupItems ?? []);
+    $hasDailyPopup = $followUpPopupItems->isNotEmpty() || $visitPopupItems->isNotEmpty();
+@endphp
+@if($hasDailyPopup)
+<div class="modal fade" id="daily-reminder-modal" tabindex="-1" aria-labelledby="daily-reminder-title" aria-hidden="true"
+     data-reminder-key="daily-reminders-{{ auth()->id() }}-{{ now()->toDateString() }}-{{ md5(auth()->user()->role . '-' . $followUpPopupItems->count() . '-' . $visitPopupItems->count()) }}">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="daily-reminder-title">Today Reminders</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if($followUpPopupItems->isNotEmpty())
+                    <div class="mb-3">
+                        <h6 class="mb-2">Today Follow-Ups</h6>
+                        <div class="list-group">
+                            @foreach($followUpPopupItems as $followUp)
+                                @if($followUp->customer)
+                                    <a href="{{ route('customers.show', $followUp->customer) }}" class="list-group-item list-group-item-action">
+                                        <div class="fw-semibold">{{ $followUp->customer->name }} <span class="text-muted">({{ $followUp->customer->pid }})</span></div>
+                                        <div class="small text-muted">{{ $followUp->customer->phone }} · {{ $followUp->customer->visa_type ?? '--' }}</div>
+                                    </a>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                @if($visitPopupItems->isNotEmpty())
+                    <div>
+                        <h6 class="mb-2">Clients Visiting Today</h6>
+                        <div class="list-group">
+                            @foreach($visitPopupItems as $customer)
+                                <a href="{{ route('customers.show', $customer) }}" class="list-group-item list-group-item-action">
+                                    <div class="fw-semibold">{{ $customer->name }} <span class="text-muted">({{ $customer->pid }})</span></div>
+                                    <div class="small text-muted">{{ $customer->phone }} · {{ $customer->visa_type ?? '--' }} · {{ optional($customer->telecaller)->name ?? '--' }}</div>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="daily-reminder-ack" data-bs-dismiss="modal">Acknowledge</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @else
     @yield('content')
 @endauth
 <script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
 @auth
+<script>
+(function () {
+    const reminderModalEl = document.getElementById('daily-reminder-modal');
+    if (!reminderModalEl || typeof bootstrap === 'undefined') return;
+
+    const key = reminderModalEl.dataset.reminderKey;
+    if (!key || localStorage.getItem(key) === '1') return;
+
+    const modal = new bootstrap.Modal(reminderModalEl);
+    modal.show();
+
+    document.getElementById('daily-reminder-ack')?.addEventListener('click', function () {
+        localStorage.setItem(key, '1');
+    });
+})();
+</script>
 <script>
 (function () {
     const sidebarToggle = document.getElementById('sidebar-toggle');

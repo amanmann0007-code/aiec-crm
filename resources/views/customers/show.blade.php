@@ -109,6 +109,62 @@
         </div>
 
         <div class="card shadow-sm mt-3">
+            <div class="card-header">Intake</div>
+            <div class="card-body">
+                @php
+                    $intakeMonths = [
+                        1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr',
+                        5 => 'May', 6 => 'Jun', 7 => 'Jul', 8 => 'Aug',
+                        9 => 'Sep', 10 => 'Oct', 11 => 'Nov', 12 => 'Dec',
+                    ];
+                    $currentIntake = $customer->intake_month && $customer->intake_year
+                        ? ($intakeMonths[$customer->intake_month] ?? $customer->intake_month) . ' ' . $customer->intake_year
+                        : null;
+                @endphp
+
+                @if($currentIntake)
+                    <div class="mb-3">
+                        <span class="badge bg-primary fs-6">{{ $currentIntake }}</span>
+                    </div>
+                @else
+                    <div class="text-muted small mb-3">No intake set.</div>
+                @endif
+
+                @if($canManageIntake)
+                    <form method="POST" action="{{ route('customers.intake.update', $customer) }}" class="intake-form">
+                        @csrf
+                        <div class="intake-field">
+                            <label for="intake_month" class="form-label small">Month</label>
+                            <select name="intake_month" id="intake_month" class="form-select form-select-sm @error('intake_month') is-invalid @enderror" required>
+                                <option value="">Select</option>
+                                @foreach($intakeMonths as $monthNumber => $monthLabel)
+                                    <option value="{{ $monthNumber }}" {{ (string) old('intake_month', $customer->intake_month) === (string) $monthNumber ? 'selected' : '' }}>{{ $monthLabel }}</option>
+                                @endforeach
+                            </select>
+                            @error('intake_month')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="intake-field">
+                            <label for="intake_year" class="form-label small">Year</label>
+                            <input type="number"
+                                   name="intake_year"
+                                   id="intake_year"
+                                   class="form-control form-control-sm @error('intake_year') is-invalid @enderror"
+                                   min="{{ now()->year }}"
+                                   max="{{ now()->year + 20 }}"
+                                   value="{{ old('intake_year', $customer->intake_year ?: now()->year) }}"
+                                   required>
+                            @error('intake_year')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="intake-action">
+                            <label class="form-label small intake-action-label">Save</label>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">Save</button>
+                        </div>
+                    </form>
+                @endif
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-3">
             <div class="card-header">Documents</div>
             <div class="card-body">
                 <form method="POST" action="{{ route('customers.documents.store', $customer) }}" enctype="multipart/form-data">
@@ -264,7 +320,17 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <th colspan="3" class="text-end">Total</th>
+                                <th colspan="2">
+                                    @if($canAddFees)
+                                        <a href="{{ route('customers.fees.receipt', $customer) }}"
+                                           target="_blank"
+                                           rel="noopener"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-printer"></i> Print Fee Receipt
+                                        </a>
+                                    @endif
+                                </th>
+                                <th class="text-end">Total</th>
                                 <th class="text-end">{{ number_format($feesTotal, 2) }}</th>
                             </tr>
                         </tfoot>
@@ -411,6 +477,21 @@
 }
 .fee-refund-row td {
     color: #dc3545;
+}
+.intake-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .75rem;
+}
+.intake-field {
+    flex: 1 1 110px;
+}
+.intake-action {
+    flex: 0 0 90px;
+}
+.intake-action-label {
+    visibility: hidden;
 }
 .process-timeline-card {
     position: relative;
@@ -599,9 +680,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusSelect = document.getElementById('status_update');
     const followUpInput = document.getElementById('follow_up_date');
     const followUpHint = document.getElementById('follow-up-hint');
+    const intakeForm = document.querySelector('.intake-form');
+    const intakeMonth = document.getElementById('intake_month');
+    const intakeYear = document.getElementById('intake_year');
     const requiresFollowUp = @json(config('crm.statuses_requiring_follow_up'));
     const noFollowUp = @json(config('crm.statuses_no_follow_up'));
     const tomorrowDefault = '{{ now()->addDay()->format('Y-m-d') }}';
+    const currentMonth = {{ now()->month }};
+    const currentYear = {{ now()->year }};
 
     function updateFollowUpRequirement() {
         if (!statusSelect || !followUpInput) return;
@@ -633,6 +719,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     statusSelect?.addEventListener('change', updateFollowUpRequirement);
     updateFollowUpRequirement();
+
+    intakeForm?.addEventListener('submit', function (event) {
+        const month = Number(intakeMonth?.value || 0);
+        const year = Number(intakeYear?.value || 0);
+        if (year < currentYear || (year === currentYear && month < currentMonth)) {
+            event.preventDefault();
+            alert('Intake cannot be earlier than the current month.');
+        }
+    });
 
     function refreshTimelineProgress(tile) {
         const timeline = tile.closest('.process-timeline-progress');

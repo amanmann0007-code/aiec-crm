@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\FeeReceiptLog;
 use App\Models\CustomerFee;
 use App\Models\Notification;
 use App\Models\Remark;
@@ -13,6 +14,35 @@ use Illuminate\Support\Facades\DB;
 
 class WebCustomerFeeController extends Controller
 {
+    public function receipt(Customer $customer)
+    {
+        $this->authorizeFeeEntry($customer);
+
+        $customer->load(['fees.user', 'counselor', 'telecaller']);
+        $total = $customer->fees->sum(fn ($fee) => $fee->signedAmount());
+
+        $log = FeeReceiptLog::create([
+            'customer_id' => $customer->id,
+            'generated_by' => Auth::id(),
+            'receipt_no' => 'FR-' . now()->format('YmdHis') . '-' . $customer->id,
+            'total_amount' => $total,
+        ]);
+
+        ActivityLogger::log(
+            Auth::id(),
+            'PRINT_FEE_RECEIPT',
+            'Generated fee receipt ' . $log->receipt_no . ' for ' . $customer->activitySummary() . ' total ' . number_format((float) $total, 2),
+            $customer->id
+        );
+
+        return view('customers.fee-receipt', [
+            'customer' => $customer,
+            'fees' => $customer->fees,
+            'receiptLog' => $log,
+            'total' => $total,
+        ]);
+    }
+
     public function store(Request $request, Customer $customer)
     {
         $this->authorizeFeeEntry($customer);

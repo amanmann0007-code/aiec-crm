@@ -41,12 +41,22 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Status *</label>
-                    <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                    <select name="status" id="lead-status" class="form-select @error('status') is-invalid @enderror" required>
                         @foreach(config('crm.telecaller_statuses') as $status)
                             <option value="{{ $status }}" {{ old('status', 'will visit') == $status ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
                         @endforeach
                     </select>
                     @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="col-md-6" id="visit-date-wrap">
+                    <label class="form-label">Visit Date *</label>
+                    <input type="date"
+                           name="visit_date"
+                           id="visit-date"
+                           class="form-control @error('visit_date') is-invalid @enderror"
+                           min="{{ now()->toDateString() }}"
+                           value="{{ old('visit_date') }}">
+                    @error('visit_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
             <div class="mt-4">
@@ -57,3 +67,27 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const status = document.getElementById('lead-status');
+    const wrap = document.getElementById('visit-date-wrap');
+    const visitDate = document.getElementById('visit-date');
+
+    function toggleVisitDate() {
+        const needsDate = status && status.value === 'will visit';
+        wrap?.classList.toggle('d-none', !needsDate);
+        if (visitDate) {
+            visitDate.required = needsDate;
+            if (!needsDate) {
+                visitDate.value = '';
+            }
+        }
+    }
+
+    status?.addEventListener('change', toggleVisitDate);
+    toggleVisitDate();
+});
+</script>
+@endpush

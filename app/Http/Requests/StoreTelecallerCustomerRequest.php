@@ -29,6 +29,7 @@ class StoreTelecallerCustomerRequest extends FormRequest
             'country' => ['required', Rule::in(array_keys(config('crm.countries')))],
             'visa_type' => ['required', Rule::in(config('crm.visa_types'))],
             'status' => ['required', Rule::in(config('crm.telecaller_statuses', []))],
+            'visit_date' => ['nullable', 'required_if:status,will visit', 'date', 'after_or_equal:today'],
         ];
     }
 
@@ -36,6 +37,8 @@ class StoreTelecallerCustomerRequest extends FormRequest
     {
         return [
             'phone.unique' => 'Phone is already registered.',
+            'visit_date.required_if' => 'Visit date is required when status is Will visit.',
+            'visit_date.after_or_equal' => 'Visit date cannot be in the past.',
         ];
     }
 }

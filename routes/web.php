@@ -86,6 +86,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/customers/{customer}/remarks', [WebRemarkController::class, 'store'])->name('customers.remarks.store');
     Route::post('/customers/{customer}/fees', [WebCustomerFeeController::class, 'store'])->name('customers.fees.store');
+    Route::get('/customers/{customer}/fees/receipt', [WebCustomerFeeController::class, 'receipt'])->name('customers.fees.receipt');
+    Route::post('/customers/{customer}/intake', [WebCustomerController::class, 'updateIntake'])
+        ->name('customers.intake.update')
+        ->middleware('role:admin,counselor,director');
     Route::post('/customers/{customer}/documents', [WebDocumentController::class, 'store'])->name('customers.documents.store');
     Route::delete('/documents/{document}', [WebDocumentController::class, 'destroy'])->name('documents.destroy');
 

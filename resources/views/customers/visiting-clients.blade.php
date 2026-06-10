@@ -14,6 +14,7 @@
                     <th>Country</th>
                     <th>Visa</th>
                     <th>Status</th>
+                    <th>Visit Date</th>
                     <th>Telecaller</th>
                     @if($canMarkReady)
                         <th class="text-end">Action</th>
@@ -29,6 +30,15 @@
                     <td>@include('partials.country-flag', ['code' => $customer->country])</td>
                     <td>{{ $customer->visa_type }}</td>
                     <td><span class="badge bg-warning text-dark">{{ $customer->status }}</span></td>
+                    <td>
+                        @if($customer->visit_date)
+                            <span class="badge {{ $customer->visit_date->isToday() ? 'bg-warning text-dark' : ($customer->visit_date->isPast() ? 'bg-danger' : 'bg-success') }}">
+                                {{ $customer->visit_date->format('d M Y') }}
+                            </span>
+                        @else
+                            <span class="text-muted">--</span>
+                        @endif
+                    </td>
                     <td>{{ optional($customer->telecaller)->name ?? '--' }}</td>
                     @if($canMarkReady)
                         <td class="text-end">
@@ -37,7 +47,7 @@
                     @endif
                 </tr>
             @empty
-                <tr><td colspan="{{ $canMarkReady ? 8 : 7 }}" class="text-center text-muted py-4">No visiting clients found.</td></tr>
+                <tr><td colspan="{{ $canMarkReady ? 9 : 8 }}" class="text-center text-muted py-4">No visiting clients found.</td></tr>
             @endforelse
             </tbody>
         </table>

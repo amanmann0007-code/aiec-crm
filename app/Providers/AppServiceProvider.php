@@ -41,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
             $tabEntriesCount = 0;
             $overdueFollowUpsCount = 0;
             $todayFollowUpsCount = 0;
+            $todayFollowUpPopupItems = collect();
+            $todayVisitPopupItems = collect();
             $user = Auth::user();
 
             if ($user) {
@@ -97,6 +99,76 @@ class AppServiceProvider extends ServiceProvider
                     ->whereDate('follow_up_date', '=', $today)
                     ->distinct('customer_id')
                     ->count('customer_id');
+
+                if (in_array($user->role, ['counselor', 'telecaller'], true)) {
+                    $todayFollowUpItems = (clone $followUpQuery)
+                        ->with('customer')
+                        ->whereDate('follow_up_date', '=', $today)
+                        ->orderBy('follow_up_date')
+                        ->get()
+                        ->groupBy('customer_id')
+                        ->map(fn ($group) => $group->first())
+                        ->values()
+                        ->take(20);
+
+                    if ($user->role === 'counselor') {
+                        $todayFollowUpPopupItems = $todayFollowUpItems;
+                    }
+
+                    $todayFollowUpItems->each(function ($followUp) use ($user, $today) {
+                        if (!$followUp->customer) {
+                            return;
+                        }
+
+                        $exists = Notification::where('user_id', $user->id)
+                            ->where('customer_id', $followUp->customer_id)
+                            ->where('title', 'Today follow-up due')
+                            ->whereDate('created_at', $today)
+                            ->exists();
+
+                        if (!$exists) {
+                            Notification::create([
+                                'user_id' => $user->id,
+                                'customer_id' => $followUp->customer_id,
+                                'title' => 'Today follow-up due',
+                                'message' => 'Today follow-up due for ' . $followUp->customer->activitySummary(),
+                            ]);
+                        }
+                    });
+                }
+
+                if (Schema::hasColumn('customers', 'visit_date') && in_array($user->role, ['receptionist', 'telecaller'], true)) {
+                    $visitQuery = Customer::with('telecaller')
+                        ->where('source', 'Telecaller')
+                        ->whereIn('status', config('crm.visiting_client_statuses', []))
+                        ->whereDate('visit_date', $today);
+
+                    if ($user->role === 'telecaller') {
+                        $visitQuery->where('telecaller_id', $user->id);
+                    }
+
+                    $todayVisitPopupItems = $visitQuery
+                        ->orderBy('name')
+                        ->limit(20)
+                        ->get();
+
+                    $todayVisitPopupItems->each(function ($customer) use ($user, $today) {
+                        $exists = Notification::where('user_id', $user->id)
+                            ->where('customer_id', $customer->id)
+                            ->where('title', 'Client visiting today')
+                            ->whereDate('created_at', $today)
+                            ->exists();
+
+                        if (!$exists) {
+                            Notification::create([
+                                'user_id' => $user->id,
+                                'customer_id' => $customer->id,
+                                'title' => 'Client visiting today',
+                                'message' => 'Client visiting today: ' . $customer->activitySummary(),
+                            ]);
+                        }
+                    });
+                }
             }
 
             $view->with([
@@ -105,6 +177,8 @@ class AppServiceProvider extends ServiceProvider
                 'tabEntriesCount' => $tabEntriesCount,
                 'overdueFollowUpsCount' => $overdueFollowUpsCount,
                 'todayFollowUpsCount' => $todayFollowUpsCount,
+                'todayFollowUpPopupItems' => $todayFollowUpPopupItems,
+                'todayVisitPopupItems' => $todayVisitPopupItems,
             ]);
         });
     }

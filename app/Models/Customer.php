@@ -25,6 +25,8 @@ class Customer extends Model
         'english_exam',
         'score',
         'visa_type',
+        'intake_month',
+        'intake_year',
         'country',
         'source',
         'reference_name',
@@ -40,7 +42,12 @@ class Customer extends Model
         'previous_refusal',
         'assigned_counselor_id',
         'status',
+        'visit_date',
         'created_by',
+    ];
+
+    protected $casts = [
+        'visit_date' => 'date',
     ];
 
     public function activitySummary(): string
@@ -89,6 +96,11 @@ class Customer extends Model
     public function fees()
     {
         return $this->hasMany(CustomerFee::class);
+    }
+
+    public function feeReceiptLogs()
+    {
+        return $this->hasMany(FeeReceiptLog::class);
     }
 
     public function refusals()

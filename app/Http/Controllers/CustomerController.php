@@ -97,6 +97,7 @@ class CustomerController extends Controller
                 'country' => $validated['country'],
                 'visa_type' => $validated['visa_type'],
                 'status' => $validated['status'],
+                'visit_date' => $validated['status'] === 'will visit' ? $validated['visit_date'] : null,
                 'telecaller_id' => Auth::id(),
                 'created_by' => Auth::id(),
                 'source' => 'Telecaller',
