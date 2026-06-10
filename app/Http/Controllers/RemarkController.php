@@ -30,6 +30,9 @@ class RemarkController extends Controller
 
         if (in_array($status, $noFollowUp, true)) {
             $validated['follow_up_date'] = null;
+            $customer->followUps()
+                ->where('status', 'pending')
+                ->update(['status' => 'done']);
         } elseif (in_array($status, $requiresFollowUp, true) && empty($validated['follow_up_date'])) {
             return response()->json(['message' => 'follow_up_date is required for this status'], 422);
         }

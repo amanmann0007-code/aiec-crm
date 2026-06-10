@@ -95,7 +95,7 @@
                     @endif
                 </p>
                 <p><strong>Visa:</strong> {{ $customer->visa_type ?? '—' }}</p>
-                <p><strong>Status:</strong> <span class="badge bg-primary">{{ $customer->status }}</span></p>
+                <p><strong>Status:</strong> <span class="badge bg-primary" id="customer-status-badge">{{ $customer->status }}</span></p>
                 <p><strong>Counselor:</strong> {{ optional($customer->counselor)->name ?? '—' }}</p>
                 <p><strong>Telecaller:</strong> {{ optional($customer->telecaller)->name ?? '—' }}</p>
                 <p><strong>Qualification:</strong> {{ $customer->qualification ?? '—' }}</p>
@@ -787,6 +787,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (state) {
                         const date = data.completed_at ? data.completed_at.slice(0, 10) : 'Completed';
                         state.innerHTML = '<i class="bi bi-check-lg"></i> ' + date;
+                    }
+                    if (data.customer_status) {
+                        const statusBadge = document.getElementById('customer-status-badge');
+                        if (statusBadge) {
+                            statusBadge.textContent = data.customer_status;
+                        }
+                        if (statusSelect && data.customer_status === 'plan drop') {
+                            statusSelect.value = 'plan drop';
+                            updateFollowUpRequirement();
+                        }
                     }
                     refreshTimelineProgress(tile);
                     tile.disabled = tile.dataset.canReopen !== '1';

@@ -55,6 +55,13 @@ class CustomerProcessStepController extends Controller
             'completed_at' => now(),
         ]);
 
+        if ($step['key'] === ProcessTimelineService::DROPOUT_KEY) {
+            $customer->update(['status' => 'plan drop']);
+            $customer->followUps()
+                ->where('status', 'pending')
+                ->update(['status' => 'done']);
+        }
+
         ActivityLogger::log(
             Auth::id(),
             'PROCESS_STEP_COMPLETED',
@@ -67,6 +74,7 @@ class CustomerProcessStepController extends Controller
             'completed' => true,
             'completed_at' => $processStep->completed_at->toDateTimeString(),
             'completed_by' => Auth::user()->name,
+            'customer_status' => $customer->fresh()->status,
         ]);
     }
 
