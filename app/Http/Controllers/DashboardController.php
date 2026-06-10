@@ -114,6 +114,37 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->pluck('total', 'status');
 
+        $leadStatusCounts = collect(['will visit' => 0, 'interested' => 0])->merge((clone $customerQuery)
+            ->where('source', 'Telecaller')
+            ->whereIn('status', ['will visit', 'interested'])
+            ->whereBetween('created_at', [$fromDate, $toDate])
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status'));
+
+        $enrollmentBaseQuery = $this->customerScopeQuery($user, $selectedUser)
+            ->whereBetween('created_at', [$fromDate, $toDate]);
+
+        $enrollmentTotal = (clone $enrollmentBaseQuery)->count();
+        $enrollmentCount = (clone $enrollmentBaseQuery)
+            ->where(function ($query) {
+                $query->where('status', 'in process')
+                    ->orWhereHas('processSteps', function ($processQuery) {
+                        $processQuery->whereNotNull('completed_at')
+                            ->where('step_key', '<>', 'dropout');
+                    });
+            })
+            ->where('status', '<>', 'plan drop')
+            ->where('status', '<>', 'not eligible')
+            ->count();
+
+        $enrollmentStats = [
+            'label' => $user->role === 'telecaller' ? 'leads' : 'customers',
+            'total' => $enrollmentTotal,
+            'enrolled' => $enrollmentCount,
+            'ratio' => $enrollmentTotal > 0 ? round(($enrollmentCount / $enrollmentTotal) * 100, 1) : 0,
+        ];
+
         $recentCustomers = (clone $customerQuery)
             ->with([
                 'counselor',
@@ -140,7 +171,9 @@ class DashboardController extends Controller
             'selectedUser',
             'selectedUserId',
             'userFilterOptions',
-            'feeStats'
+            'feeStats',
+            'leadStatusCounts',
+            'enrollmentStats'
         ));
     }
 
@@ -225,6 +258,6 @@ class DashboardController extends Controller
 
     private function canViewAllStats($user): bool
     {
-        return in_array($user->role, ['admin', 'receptionist'], true);
+        return in_array($user->role, ['admin', 'receptionist', 'director'], true);
     }
 }

@@ -128,6 +128,45 @@
     @endif
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-xl-4 col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body dashboard-stat-card">
+                <div>
+                    <div class="text-muted small">Total {{ ucfirst($enrollmentStats['label']) }}</div>
+                    <div class="fs-3 fw-bold">{{ $enrollmentStats['total'] }}</div>
+                    <div class="text-muted small">{{ $fromDate->format('d M Y') }} - {{ $toDate->format('d M Y') }}</div>
+                </div>
+                <div class="dashboard-stat-emoji" aria-hidden="true">#</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-body dashboard-stat-card">
+                <div>
+                    <div class="text-muted small">Enrolled {{ ucfirst($enrollmentStats['label']) }}</div>
+                    <div class="fs-3 fw-bold text-success">{{ $enrollmentStats['enrolled'] }}</div>
+                    <div class="text-muted small">In process or process started</div>
+                </div>
+                <div class="dashboard-stat-emoji" aria-hidden="true">%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-12">
+        <div class="card shadow-sm h-100">
+            <div class="card-body dashboard-stat-card">
+                <div>
+                    <div class="text-muted small">Enrollment Ratio</div>
+                    <div class="fs-3 fw-bold text-primary">{{ $enrollmentStats['ratio'] }}%</div>
+                    <div class="text-muted small">{{ $enrollmentStats['enrolled'] }} / {{ $enrollmentStats['total'] }}</div>
+                </div>
+                <div class="dashboard-stat-emoji" aria-hidden="true">=</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if($isSuperAdmin ?? false)
 <div class="row g-3 mb-4">
     <div class="col-xl-4 col-md-6">
@@ -162,6 +201,24 @@
     </div>
 </div>
 @endif
+
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm lead-status-card">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span>Telecaller lead status</span>
+                <span class="text-muted small">Will visit vs interested in selected date range</span>
+            </div>
+            <div class="card-body">
+                @if($leadStatusCounts->isNotEmpty())
+                    <div id="lead-status-chart"></div>
+                @else
+                    <div class="text-center text-muted py-5">No telecaller leads found in this date range.</div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row g-4 mb-4">
     <div class="col-xl-6">
@@ -270,6 +327,7 @@
 <style>
     .status-overview-card #status-chart { min-height: 320px; }
     .process-overview-card #process-chart { min-height: 320px; }
+    .lead-status-card #lead-status-chart { min-height: 320px; }
     .dashboard-user-filter { min-width: 240px; }
     .dashboard-stat-card {
         display: flex;
@@ -384,9 +442,75 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endpush
 
-@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty())
+@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty() || $leadStatusCounts->isNotEmpty())
 @push('scripts')
 <script src="{{ asset('vendor/apexcharts/apexcharts.min.js') }}"></script>
+@if($leadStatusCounts->isNotEmpty())
+<script>
+(function () {
+    const labels = @json($leadStatusCounts->keys()->values()->map(fn ($status) => ucfirst($status)));
+    const counts = @json($leadStatusCounts->values());
+    const chartEl = document.querySelector('#lead-status-chart');
+    if (!chartEl) return;
+
+    const chart = new ApexCharts(chartEl, {
+        chart: {
+            type: 'bar',
+            height: 320,
+            fontFamily: 'inherit',
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Leads',
+            data: counts
+        }],
+        xaxis: {
+            categories: labels,
+            labels: {
+                style: { fontWeight: 600 }
+            }
+        },
+        yaxis: {
+            forceNiceScale: true,
+            labels: {
+                formatter: function (value) {
+                    return Math.round(value);
+                }
+            }
+        },
+        colors: ['#1a4d8f'],
+        plotOptions: {
+            bar: {
+                borderRadius: 6,
+                columnWidth: '42%',
+                dataLabels: { position: 'top' }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            offsetY: -20,
+            style: {
+                colors: ['#0f172a'],
+                fontSize: '14px',
+                fontWeight: 700
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function (value) {
+                    return value + ' lead' + (value === 1 ? '' : 's');
+                }
+            }
+        },
+        grid: {
+            borderColor: '#e2e8f0'
+        }
+    });
+
+    chart.render();
+})();
+</script>
+@endif
 <script>
 (function () {
     const statuses = @json($statusCounts->keys()->values());
