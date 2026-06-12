@@ -137,6 +137,15 @@
                             <option value="yes" {{ old('english_test', $customer->english_test) == 'yes' ? 'selected' : '' }}>Yes</option>
                         </select>
                     </div>
+                    <div class="col-md-4" id="english-subject-score-wrap">
+                        <label class="form-label">English Subject Score *</label>
+                        <input name="english_subject_score"
+                               id="english_subject_score"
+                               class="form-control @error('english_subject_score') is-invalid @enderror"
+                               value="{{ old('english_subject_score', $customer->english_subject_score) }}"
+                               placeholder="Example: 75%">
+                        @error('english_subject_score')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                     <div class="col-md-4">
                         <label class="form-label">Status *</label>
                         <select name="status" class="form-select" required>
@@ -231,6 +240,8 @@ const source = document.getElementById('source');
 const refWrap = document.getElementById('reference-wrap');
 const engTest = document.getElementById('english_test');
 const engWrap = document.getElementById('english-wrap');
+const engSubjectWrap = document.getElementById('english-subject-score-wrap');
+const engSubjectScore = document.getElementById('english_subject_score');
 const prevRef = document.getElementById('previous_refusal');
 const refusWrap = document.getElementById('refusal-wrap');
 const form = document.getElementById('customer-form');
@@ -238,7 +249,17 @@ const form = document.getElementById('customer-form');
 function toggleSource() {
     refWrap.classList.toggle('d-none', source.value !== 'Reference');
 }
-function toggleEnglish() { engWrap.classList.toggle('d-none', engTest.value !== 'yes'); }
+function toggleEnglish() {
+    const hasEnglishTest = engTest.value === 'yes';
+    engWrap.classList.toggle('d-none', !hasEnglishTest);
+    engSubjectWrap.classList.toggle('d-none', hasEnglishTest);
+    if (engSubjectScore) {
+        engSubjectScore.required = !hasEnglishTest;
+        if (hasEnglishTest) {
+            engSubjectScore.value = '';
+        }
+    }
+}
 function toggleRefusal() { refusWrap.classList.toggle('d-none', prevRef.value !== 'yes'); }
 
 source.addEventListener('change', toggleSource);

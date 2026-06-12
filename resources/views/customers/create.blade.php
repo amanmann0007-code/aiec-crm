@@ -25,6 +25,7 @@
                 $scoreDefault = old('score', optional($entry)->score);
                 $gapDefault = old('gap_years', optional($entry)->gap_years);
                 $englishTestDefault = old('english_test', optional($entry)->english_test ?: 'no');
+                $englishSubjectScoreDefault = old('english_subject_score');
                 $testTypeDefault = old('test_type', optional($entry)->test_type);
                 $listeningDefault = old('listening', optional($entry)->listening);
                 $readingDefault = old('reading', optional($entry)->reading);
@@ -174,6 +175,15 @@
                             <option value="yes" {{ $englishTestDefault == 'yes' ? 'selected' : '' }}>Yes</option>
                         </select>
                     </div>
+                    <div class="col-md-4" id="english-subject-score-wrap">
+                        <label class="form-label">English Subject Score *</label>
+                        <input name="english_subject_score"
+                               id="english_subject_score"
+                               class="form-control @error('english_subject_score') is-invalid @enderror"
+                               value="{{ $englishSubjectScoreDefault }}"
+                               placeholder="Example: 75%">
+                        @error('english_subject_score')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                 </div>
 
                 <div class="row g-3 mt-1">
@@ -263,6 +273,8 @@ const source = document.getElementById('source');
 const refWrap = document.getElementById('reference-wrap');
 const engTest = document.getElementById('english_test');
 const engWrap = document.getElementById('english-wrap');
+const engSubjectWrap = document.getElementById('english-subject-score-wrap');
+const engSubjectScore = document.getElementById('english_subject_score');
 const prevRef = document.getElementById('previous_refusal');
 const refusWrap = document.getElementById('refusal-wrap');
 const form = document.getElementById('customer-form');
@@ -270,7 +282,17 @@ const form = document.getElementById('customer-form');
 function toggleSource() {
     refWrap.classList.toggle('d-none', source.value !== 'Reference');
 }
-function toggleEnglish() { engWrap.classList.toggle('d-none', engTest.value !== 'yes'); }
+function toggleEnglish() {
+    const hasEnglishTest = engTest.value === 'yes';
+    engWrap.classList.toggle('d-none', !hasEnglishTest);
+    engSubjectWrap.classList.toggle('d-none', hasEnglishTest);
+    if (engSubjectScore) {
+        engSubjectScore.required = !hasEnglishTest;
+        if (hasEnglishTest) {
+            engSubjectScore.value = '';
+        }
+    }
+}
 function toggleRefusal() { refusWrap.classList.toggle('d-none', prevRef.value !== 'yes'); }
 
 source.addEventListener('change', toggleSource);

@@ -66,6 +66,7 @@
                     <th><a href="{{ $sortUrl('pid') }}" class="sortable-heading {{ $currentSort === 'pid' ? 'active' : '' }}">PID <i class="bi {{ $sortIcon('pid') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('name') }}" class="sortable-heading {{ $currentSort === 'name' ? 'active' : '' }}">Name <i class="bi {{ $sortIcon('name') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('phone') }}" class="sortable-heading {{ $currentSort === 'phone' ? 'active' : '' }}">Phone <i class="bi {{ $sortIcon('phone') }}"></i></a></th>
+                    <th><a href="{{ $sortUrl('source') }}" class="sortable-heading {{ $currentSort === 'source' ? 'active' : '' }}">Source <i class="bi {{ $sortIcon('source') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('country') }}" class="sortable-heading {{ $currentSort === 'country' ? 'active' : '' }}">Country <i class="bi {{ $sortIcon('country') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('visa_type') }}" class="sortable-heading {{ $currentSort === 'visa_type' ? 'active' : '' }}">Visa <i class="bi {{ $sortIcon('visa_type') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('process') }}" class="sortable-heading {{ $currentSort === 'process' ? 'active' : '' }}">Process <i class="bi {{ $sortIcon('process') }}"></i></a></th>
@@ -101,6 +102,7 @@
                     <td><a href="{{ route('customers.show', $c) }}">{{ $c->pid }}</a></td>
                     <td>{{ $c->name }}</td>
                     <td>{{ $c->phone }}</td>
+                    <td>{{ $c->source ?: '--' }}</td>
                     <td>@include('partials.country-flag', ['code' => $c->country])</td>
                     <td>{{ $c->visa_type }}</td>
                     <td>
@@ -121,7 +123,7 @@
                     <td>{{ optional($c->counselor)->name ?? '--' }}</td>
                 </tr>
             @empty
-                <tr><td colspan="9" class="text-center text-muted py-4">{{ $emptyMessage ?? 'No customers found.' }}</td></tr>
+                <tr><td colspan="10" class="text-center text-muted py-4">{{ $emptyMessage ?? 'No customers found.' }}</td></tr>
             @endforelse
             </tbody>
         </table>

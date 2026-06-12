@@ -46,6 +46,7 @@ class UpdateCustomerRequest extends FormRequest
             'reference_name' => 'nullable|string|max:255',
             'telecaller_id' => ['nullable', 'required_without:assigned_counselor_id', 'exists:users,id'],
             'english_test' => 'nullable|in:yes,no',
+            'english_subject_score' => ['nullable', 'required_if:english_test,no', 'string', 'max:50'],
             'test_type' => 'nullable|string|max:255',
             'listening' => 'nullable|numeric',
             'reading' => 'nullable|numeric',
@@ -67,6 +68,7 @@ class UpdateCustomerRequest extends FormRequest
             'phone.unique' => 'Phone is already registered.',
             'assigned_counselor_id.required_without' => 'Assign either a counselor or a telecaller.',
             'telecaller_id.required_without' => 'Assign either a counselor or a telecaller.',
+            'english_subject_score.required_if' => 'Enter the English subject score when English Test is No.',
         ];
     }
 

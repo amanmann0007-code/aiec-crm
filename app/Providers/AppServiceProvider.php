@@ -46,7 +46,11 @@ class AppServiceProvider extends ServiceProvider
             $user = Auth::user();
 
             if ($user) {
-                $query = Customer::where('status', 'assigned');
+                $query = Customer::where('status', 'assigned')
+                    ->whereDoesntHave('remarks', function ($remarkQuery) {
+                        $remarkQuery->whereNotNull('status_update')
+                            ->where('status_update', '<>', '');
+                    });
 
                 if ($user->role === 'counselor') {
                     $query->where('assigned_counselor_id', $user->id);

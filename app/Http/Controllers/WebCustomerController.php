@@ -63,7 +63,11 @@ class WebCustomerController extends Controller
     public function newCases(Request $request)
     {
         $query = $this->visibleCustomerQuery()
-            ->where('status', 'assigned');
+            ->where('status', 'assigned')
+            ->whereDoesntHave('remarks', function ($remarkQuery) {
+                $remarkQuery->whereNotNull('status_update')
+                    ->where('status_update', '<>', '');
+            });
 
         [$sortColumn, $sortDirection] = $this->customerSort($request);
         $this->applyCustomerSort($query, $sortColumn, $sortDirection);
@@ -185,6 +189,7 @@ class WebCustomerController extends Controller
             $customerFields['status'] = 'assigned';
             $customerFields['english_test'] = $customerFields['english_test'] ?? 'no';
             $customerFields['previous_refusal'] = $customerFields['previous_refusal'] ?? 'no';
+            $this->normalizeEnglishFields($customerFields);
 
             if ($leadId) {
                 $customer = Customer::whereKey($leadId)
@@ -302,6 +307,7 @@ class WebCustomerController extends Controller
         DB::transaction(function () use ($validated, $customer) {
             $validated['english_test'] = $validated['english_test'] ?? 'no';
             $validated['previous_refusal'] = $validated['previous_refusal'] ?? 'no';
+            $this->normalizeEnglishFields($validated);
 
             $before = $this->customerChangeSnapshot($customer, $customer->refusals()->pluck('country')->all());
             $customerFields = collect($validated)->except('refusal_countries')->all();
@@ -449,9 +455,21 @@ class WebCustomerController extends Controller
         return $query;
     }
 
+    private function normalizeEnglishFields(array &$fields): void
+    {
+        if (($fields['english_test'] ?? 'no') === 'yes') {
+            $fields['english_subject_score'] = null;
+            return;
+        }
+
+        foreach (['test_type', 'listening', 'reading', 'writing', 'speaking', 'overall', 'test_expiry'] as $field) {
+            $fields[$field] = null;
+        }
+    }
+
     private function customerSort(Request $request): array
     {
-        $allowedColumns = ['pid', 'name', 'phone', 'country', 'visa_type', 'process', 'status', 'follow_up', 'counselor'];
+        $allowedColumns = ['pid', 'name', 'phone', 'country', 'visa_type', 'source', 'process', 'status', 'follow_up', 'counselor'];
         $sortColumn = $request->query('sort', 'latest');
         $sortDirection = strtolower((string) $request->query('direction', 'desc'));
 
@@ -524,6 +542,7 @@ class WebCustomerController extends Controller
             'phone' => 'customers.phone',
             'country' => 'customers.country',
             'visa_type' => 'customers.visa_type',
+            'source' => 'customers.source',
             'status' => 'customers.status',
         ];
 
@@ -601,6 +620,7 @@ class WebCustomerController extends Controller
             'reference_name' => $customer->reference_name,
             'telecaller_id' => $this->userLabel($customer->telecaller_id),
             'english_test' => $customer->english_test,
+            'english_subject_score' => $customer->english_subject_score,
             'test_type' => $customer->test_type,
             'listening' => $customer->listening,
             'reading' => $customer->reading,
@@ -636,6 +656,7 @@ class WebCustomerController extends Controller
             'reference_name' => 'Reference name',
             'telecaller_id' => 'Telecaller',
             'english_test' => 'English test',
+            'english_subject_score' => 'English subject score',
             'test_type' => 'Test type',
             'listening' => 'Listening',
             'reading' => 'Reading',

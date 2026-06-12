@@ -39,6 +39,7 @@ class CustomerController extends Controller
             $validated['status'] = $validated['status'] ?? 'assigned';
             $validated['english_test'] = $validated['english_test'] ?? 'no';
             $validated['previous_refusal'] = $validated['previous_refusal'] ?? 'no';
+            $this->normalizeEnglishFields($validated);
 
             $customer = Customer::create($validated);
 
@@ -150,5 +151,17 @@ class CustomerController extends Controller
         $document->delete();
 
         return response()->json(['message' => 'Document deleted']);
+    }
+
+    private function normalizeEnglishFields(array &$fields): void
+    {
+        if (($fields['english_test'] ?? 'no') === 'yes') {
+            $fields['english_subject_score'] = null;
+            return;
+        }
+
+        foreach (['test_type', 'listening', 'reading', 'writing', 'speaking', 'overall', 'test_expiry'] as $field) {
+            $fields[$field] = null;
+        }
     }
 }

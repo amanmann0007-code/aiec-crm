@@ -51,6 +51,7 @@ class StoreCustomerRequest extends FormRequest
             'reference_name' => 'nullable|string|max:255',
             'telecaller_id' => ['nullable', 'exists:users,id'],
             'english_test' => 'nullable|in:yes,no',
+            'english_subject_score' => ['nullable', 'required_if:english_test,no', 'string', 'max:50'],
             'test_type' => 'nullable|string|max:255',
             'listening' => 'nullable|numeric',
             'reading' => 'nullable|numeric',
@@ -71,6 +72,7 @@ class StoreCustomerRequest extends FormRequest
         return [
             'phone.unique' => 'Phone is already registered.',
             'assigned_counselor_id.required' => 'Select a counselor before creating the customer.',
+            'english_subject_score.required_if' => 'Enter the English subject score when English Test is No.',
         ];
     }
 

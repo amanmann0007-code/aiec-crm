@@ -26,8 +26,12 @@ class CustomerProcessStepController extends Controller
             ->first();
 
         if ($processStep) {
-            if (!in_array(Auth::user()->role, ['admin', 'director'], true)) {
-                abort(403, 'Only admin or director can reopen a completed process step.');
+            $canCounselorReopenDropout = Auth::user()->role === 'counselor'
+                && $customer->assigned_counselor_id === Auth::id()
+                && $step['key'] === ProcessTimelineService::DROPOUT_KEY;
+
+            if (!in_array(Auth::user()->role, ['admin', 'director'], true) && !$canCounselorReopenDropout) {
+                abort(403, 'Only admin, director, or assigned counselor for Dropout can reopen this process step.');
             }
 
             $processStep->delete();

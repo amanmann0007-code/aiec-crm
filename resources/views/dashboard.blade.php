@@ -206,15 +206,32 @@
     <div class="col-12">
         <div class="card shadow-sm lead-status-card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <span>Telecaller lead status</span>
-                <span class="text-muted small">Will visit vs interested in selected date range</span>
+                <span>Lead and source report</span>
+                <span class="text-muted small">Selected date range</span>
             </div>
             <div class="card-body">
-                @if($leadStatusCounts->isNotEmpty())
-                    <div id="lead-status-chart"></div>
-                @else
-                    <div class="text-center text-muted py-5">No telecaller leads found in this date range.</div>
-                @endif
+                <div class="row g-4">
+                    <div class="col-xl-6">
+                        <div class="report-chart-panel">
+                            <div class="fw-semibold mb-2">Telecaller lead status</div>
+                            @if($leadStatusCounts->sum() > 0)
+                                <div id="lead-status-chart"></div>
+                            @else
+                                <div class="text-center text-muted py-5">No telecaller leads found in this date range.</div>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-xl-6">
+                        <div class="report-chart-panel">
+                            <div class="fw-semibold mb-2">Source distribution</div>
+                            @if($sourceCounts->isNotEmpty())
+                                <div id="source-chart"></div>
+                            @else
+                                <div class="text-center text-muted py-5">No sources found in this date range.</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -292,14 +309,20 @@
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
-            <thead><tr><th>PID</th><th>Name</th><th>Phone</th><th>Process</th><th>Status</th><th>Counselor</th></tr></thead>
+            <thead><tr><th>PID</th><th>Name</th><th>Phone</th><th>Source</th><th>Process</th><th>Status</th><th>Counselor</th></tr></thead>
             <tbody>
             @forelse($recentCustomers as $c)
-                @php($latestProcessStep = $c->processSteps->first())
-                <tr>
+                @php
+                    $latestProcessStep = $c->processSteps->first();
+                    $strikeStatuses = ['plan drop', 'jfi', 'not eligible'];
+                    $shouldStrikeCustomer = in_array(strtolower((string) $c->status), $strikeStatuses, true)
+                        || strtolower((string) optional($latestProcessStep)->step_label) === 'dropout';
+                @endphp
+                <tr class="{{ $shouldStrikeCustomer ? 'customer-row-struck' : '' }}">
                     <td><a href="{{ route('customers.show', $c) }}">{{ $c->pid }}</a></td>
                     <td>{{ $c->name }}</td>
                     <td>{{ $c->phone }}</td>
+                    <td>{{ $c->source ?: '--' }}</td>
                     <td>
                         @if($latestProcessStep)
                             <span class="badge bg-success process-status-tag">{{ $latestProcessStep->step_label }}</span>
@@ -315,7 +338,7 @@
                     <td>{{ optional($c->counselor)->name ?? '--' }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6" class="text-center text-muted">No customers yet.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted">No customers yet.</td></tr>
             @endforelse
             </tbody>
         </table>
@@ -327,7 +350,11 @@
 <style>
     .status-overview-card #status-chart { min-height: 320px; }
     .process-overview-card #process-chart { min-height: 320px; }
-    .lead-status-card #lead-status-chart { min-height: 320px; }
+    .lead-status-card #lead-status-chart,
+    .lead-status-card #source-chart { min-height: 280px; }
+    .report-chart-panel {
+        min-height: 340px;
+    }
     .dashboard-user-filter { min-width: 240px; }
     .dashboard-stat-card {
         display: flex;
@@ -355,6 +382,16 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         vertical-align: middle;
+    }
+    .customer-row-struck td:not(:last-child) {
+        text-decoration: line-through;
+        text-decoration-thickness: 1.5px;
+        color: #94a3b8;
+    }
+    .customer-row-struck a,
+    .customer-row-struck .badge {
+        text-decoration: line-through;
+        text-decoration-thickness: 1.5px;
     }
     .dashboard-link-card:hover, .quick-report-card:hover {
         border-color: #93c5fd;
@@ -442,10 +479,10 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endpush
 
-@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty() || $leadStatusCounts->isNotEmpty())
+@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty() || $leadStatusCounts->sum() > 0 || $sourceCounts->isNotEmpty())
 @push('scripts')
 <script src="{{ asset('vendor/apexcharts/apexcharts.min.js') }}"></script>
-@if($leadStatusCounts->isNotEmpty())
+@if($leadStatusCounts->sum() > 0)
 <script>
 (function () {
     const labels = @json($leadStatusCounts->keys()->values()->map(fn ($status) => ucfirst($status)));
@@ -456,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const chart = new ApexCharts(chartEl, {
         chart: {
             type: 'bar',
-            height: 320,
+            height: 280,
             fontFamily: 'inherit',
             toolbar: { show: false }
         },
@@ -505,6 +542,68 @@ document.addEventListener('DOMContentLoaded', function () {
         grid: {
             borderColor: '#e2e8f0'
         }
+    });
+
+    chart.render();
+})();
+</script>
+@endif
+@if($sourceCounts->isNotEmpty())
+<script>
+(function () {
+    const labels = @json($sourceCounts->keys()->values());
+    const counts = @json($sourceCounts->values());
+    const chartEl = document.querySelector('#source-chart');
+    if (!chartEl) return;
+
+    const chart = new ApexCharts(chartEl, {
+        chart: {
+            type: 'bar',
+            height: 280,
+            fontFamily: 'inherit',
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Customers',
+            data: counts
+        }],
+        xaxis: {
+            categories: labels,
+            labels: { style: { fontWeight: 600 } }
+        },
+        yaxis: {
+            forceNiceScale: true,
+            labels: {
+                formatter: function (value) {
+                    return Math.round(value);
+                }
+            }
+        },
+        colors: ['#10b981'],
+        plotOptions: {
+            bar: {
+                borderRadius: 6,
+                columnWidth: '42%',
+                dataLabels: { position: 'top' }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            offsetY: -20,
+            style: {
+                colors: ['#0f172a'],
+                fontSize: '14px',
+                fontWeight: 700
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function (value) {
+                    return value + ' customer' + (value === 1 ? '' : 's');
+                }
+            }
+        },
+        grid: { borderColor: '#e2e8f0' }
     });
 
     chart.render();

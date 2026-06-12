@@ -122,6 +122,13 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status'));
 
+        $sourceCounts = (clone $customerQuery)
+            ->whereBetween('created_at', [$fromDate, $toDate])
+            ->selectRaw("COALESCE(NULLIF(source, ''), 'Unknown') as source_label, COUNT(*) as total")
+            ->groupBy('source_label')
+            ->orderByDesc('total')
+            ->pluck('total', 'source_label');
+
         $enrollmentBaseQuery = $this->customerScopeQuery($user, $selectedUser)
             ->whereBetween('created_at', [$fromDate, $toDate]);
 
@@ -173,6 +180,7 @@ class DashboardController extends Controller
             'userFilterOptions',
             'feeStats',
             'leadStatusCounts',
+            'sourceCounts',
             'enrollmentStats'
         ));
     }

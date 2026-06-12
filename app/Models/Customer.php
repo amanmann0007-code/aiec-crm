@@ -32,6 +32,7 @@ class Customer extends Model
         'reference_name',
         'telecaller_id',
         'english_test',
+        'english_subject_score',
         'test_type',
         'listening',
         'reading',

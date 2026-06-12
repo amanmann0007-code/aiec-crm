@@ -18,7 +18,7 @@
         <table class="table mb-0">
             <thead>
                 <tr>
-                    <th>Name</th><th>PID</th><th>Phone</th><th>Process</th><th>Status</th><th>Follow-up</th><th>Last remark</th><th></th>
+                    <th>Name</th><th>PID</th><th>Phone</th><th>Source</th><th>Process</th><th>Status</th><th>Follow-up</th><th>Last remark</th><th></th>
                 </tr>
             </thead>
             <tbody>
@@ -33,6 +33,7 @@
                     <td>{{ $c->name ?? '--' }}</td>
                     <td><a href="{{ route('customers.show', $c) }}">{{ $c->pid }}</a></td>
                     <td>{{ $c->phone }}</td>
+                    <td>{{ $c->source ?: '--' }}</td>
                     <td>
                         @if($latestProcessStep)
                             <span class="badge bg-success process-status-tag">{{ $latestProcessStep->step_label }}</span>
@@ -48,7 +49,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="text-muted text-center py-3">None</td></tr>
+                <tr><td colspan="9" class="text-muted text-center py-3">None</td></tr>
             @endforelse
             </tbody>
         </table>

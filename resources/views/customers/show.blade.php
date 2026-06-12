@@ -32,6 +32,12 @@
                             $completed = $completedProcessSteps->get($step['key']);
                             $isCompleted = (bool) $completed;
                             $completeUrl = route('customers.process-steps.complete', [$customer, $step['key']]);
+                            $canReopenThisStep = $canReopenProcessTimeline
+                                || (
+                                    auth()->user()->role === 'counselor'
+                                    && $customer->assigned_counselor_id === auth()->id()
+                                    && $step['key'] === \App\Services\ProcessTimelineService::DROPOUT_KEY
+                                );
                         @endphp
 
                         <button type="button"
@@ -39,9 +45,9 @@
                                 data-complete-url="{{ $completeUrl }}"
                                 data-step-key="{{ $step['key'] }}"
                                 data-completed="{{ $isCompleted ? '1' : '0' }}"
-                                data-can-reopen="{{ $canReopenProcessTimeline ? '1' : '0' }}"
+                                data-can-reopen="{{ $canReopenThisStep ? '1' : '0' }}"
                                 data-confirm-complete="{{ auth()->user()->role === 'counselor' ? '1' : '0' }}"
-                                {{ (!$canCompleteProcessTimeline || ($isCompleted && !$canReopenProcessTimeline)) ? 'disabled' : '' }}>
+                                {{ (!$canCompleteProcessTimeline || ($isCompleted && !$canReopenThisStep)) ? 'disabled' : '' }}>
                             <span class="process-step-index">{{ $step['order'] }}</span>
                             <span class="process-step-label">{{ $step['label'] }}</span>
                             <span class="process-step-state">
@@ -101,7 +107,12 @@
                 <p><strong>Qualification:</strong> {{ $customer->qualification ?? '—' }}</p>
                 <p><strong>Pass-out Year:</strong> {{ $customer->qualification_year ?? '—' }}</p>
                 <p><strong>GAP:</strong> {{ $customer->gap_years ?? '—' }}</p>
-                <p><strong>English Exam:</strong> {{ $customer->english_exam ?? '—' }}</p>
+                <p><strong>English Test:</strong> {{ ucfirst($customer->english_test ?? 'no') }}</p>
+                @if(($customer->english_test ?? 'no') === 'no')
+                    <p><strong>English Subject Score:</strong> {{ $customer->english_subject_score ?? '—' }}</p>
+                @else
+                    <p><strong>English Exam:</strong> {{ $customer->test_type ?? '—' }}</p>
+                @endif
                 @if($customer->refusals->count())
                     <p><strong>Refusals:</strong> {{ $customer->refusals->pluck('country')->join(', ') }}</p>
                 @endif
