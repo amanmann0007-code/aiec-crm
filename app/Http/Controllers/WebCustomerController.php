@@ -376,6 +376,43 @@ class WebCustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', 'Intake updated.');
     }
 
+    public function storeSpecialRemark(Request $request, Customer $customer)
+    {
+        $this->authorizeSpecialRemarkEntry($customer);
+
+        if (trim((string) $customer->special_remark) !== '') {
+            return back()
+                ->withErrors(['special_remark' => 'Special remark has already been entered for this customer.'])
+                ->withInput();
+        }
+
+        $validated = $request->validate([
+            'special_remark' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $specialRemark = trim($validated['special_remark']);
+        if ($specialRemark === '') {
+            return back()
+                ->withErrors(['special_remark' => 'Special remark is required.'])
+                ->withInput();
+        }
+
+        $customer->update([
+            'special_remark' => $specialRemark,
+            'special_remark_by' => Auth::id(),
+            'special_remark_at' => now(),
+        ]);
+
+        ActivityLogger::log(
+            Auth::id(),
+            'SPECIAL_REMARK',
+            'Added special remark for ' . $customer->activitySummary(),
+            $customer->id
+        );
+
+        return redirect()->route('customers.show', $customer)->with('success', 'Special remark saved.');
+    }
+
     public function show(Customer $customer)
     {
         $this->authorizeCustomer($customer);
@@ -393,6 +430,7 @@ class WebCustomerController extends Controller
                 $feeQuery->latest('id');
             },
             'fees.user',
+            'specialRemarkAuthor',
             'documents.uploader',
             'followUps',
             'processSteps.completedBy',
@@ -414,6 +452,10 @@ class WebCustomerController extends Controller
         $canAddFees = Auth::user()->role !== 'telecaller';
         $canManageIntake = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id());
+        $canViewSpecialRemark = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true);
+        $canAddSpecialRemark = Auth::user()->role === 'counselor'
+            && $customer->assigned_counselor_id === Auth::id()
+            && trim((string) $customer->special_remark) === '';
 
         return view('customers.show', compact(
             'customer',
@@ -424,7 +466,9 @@ class WebCustomerController extends Controller
             'canCompleteProcessTimeline',
             'canReopenProcessTimeline',
             'canAddFees',
-            'canManageIntake'
+            'canManageIntake',
+            'canViewSpecialRemark',
+            'canAddSpecialRemark'
         ));
     }
 
@@ -778,5 +822,14 @@ class WebCustomerController extends Controller
         }
 
         abort(403);
+    }
+
+    private function authorizeSpecialRemarkEntry(Customer $customer): void
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->role !== 'counselor' || $customer->assigned_counselor_id !== $user->id) {
+            abort(403);
+        }
     }
 }

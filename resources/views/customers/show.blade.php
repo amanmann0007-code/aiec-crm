@@ -216,6 +216,44 @@
     </div>
 
     <div class="col-lg-8">
+        @if($canViewSpecialRemark)
+            <div class="card shadow-sm mb-3 special-remark-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Special Remark</span>
+                    <span class="small text-muted">Counselor only entry</span>
+                </div>
+                <div class="card-body">
+                    @if($customer->special_remark)
+                        <div class="special-remark-box">
+                            {!! nl2br(e($customer->special_remark)) !!}
+                        </div>
+                        <div class="small text-muted mt-2">
+                            Added by {{ optional($customer->specialRemarkAuthor)->name ?? 'Unknown' }}
+                            @if($customer->special_remark_at)
+                                &middot; {{ $customer->special_remark_at->format('d M Y h:i A') }}
+                            @endif
+                        </div>
+                    @elseif($canAddSpecialRemark)
+                        <form method="POST" action="{{ route('customers.special-remark.store', $customer) }}">
+                            @csrf
+                            <div class="mb-2">
+                                <textarea name="special_remark"
+                                          class="form-control @error('special_remark') is-invalid @enderror"
+                                          rows="3"
+                                          maxlength="5000"
+                                          placeholder="Enter special remark..."
+                                          required>{{ old('special_remark') }}</textarea>
+                                @error('special_remark')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary">Save Special Remark</button>
+                        </form>
+                    @else
+                        <div class="text-muted small">No special remark entered.</div>
+                    @endif
+                </div>
+            </div>
+        @endif
+
         <div class="card shadow-sm mb-3 remarks-card">
             <div class="card-header">Remarks (Chat)</div>
             <div class="card-body">
@@ -410,6 +448,17 @@
 .remark-field-input {
     height: 38px;
     min-height: 38px;
+}
+.special-remark-card .card-header {
+    background: #fff8e6;
+}
+.special-remark-box {
+    border-left: 4px solid #f59f00;
+    border-radius: 6px;
+    background: #fffdf5;
+    color: #1f2937;
+    padding: .85rem 1rem;
+    white-space: normal;
 }
 .remark-col .field-hint {
     display: block;

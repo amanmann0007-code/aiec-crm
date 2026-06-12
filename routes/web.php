@@ -84,6 +84,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:telecaller');
     Route::get('/customers/{customer}', [WebCustomerController::class, 'show'])->name('customers.show');
 
+    Route::post('/customers/{customer}/special-remark', [WebCustomerController::class, 'storeSpecialRemark'])
+        ->name('customers.special-remark.store')
+        ->middleware('role:counselor');
     Route::post('/customers/{customer}/remarks', [WebRemarkController::class, 'store'])->name('customers.remarks.store');
     Route::post('/customers/{customer}/fees', [WebCustomerFeeController::class, 'store'])->name('customers.fees.store');
     Route::get('/customers/{customer}/fees/receipt', [WebCustomerFeeController::class, 'receipt'])->name('customers.fees.receipt');

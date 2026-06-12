@@ -44,11 +44,15 @@ class Customer extends Model
         'assigned_counselor_id',
         'status',
         'visit_date',
+        'special_remark',
+        'special_remark_by',
+        'special_remark_at',
         'created_by',
     ];
 
     protected $casts = [
         'visit_date' => 'date',
+        'special_remark_at' => 'datetime',
     ];
 
     public function activitySummary(): string
@@ -102,6 +106,11 @@ class Customer extends Model
     public function feeReceiptLogs()
     {
         return $this->hasMany(FeeReceiptLog::class);
+    }
+
+    public function specialRemarkAuthor()
+    {
+        return $this->belongsTo(User::class, 'special_remark_by');
     }
 
     public function refusals()
