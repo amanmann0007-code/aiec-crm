@@ -100,24 +100,25 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-5. Configure company branding in `.env`:
+5. Configure company branding in [config/company.php](/C:/wamp64/www/aiec-crm/config/company.php):
 
-```env
-COMPANY_NAME="AIEC Institute"
-COMPANY_CRM_NAME="AIEC CRM"
-COMPANY_TAGLINE="Customer Relationship Management"
-COMPANY_SUBTITLE="Study Abroad Lally Infosys"
-COMPANY_LOGO_PATH=images/aiec-logo.png
-COMPANY_ICON_PATH=images/aiec-icon.svg
-COMPANY_ADDRESS_LINE1=
-COMPANY_ADDRESS_LINE2=
-COMPANY_ADDRESS_LINE3=
-COMPANY_PHONE=
-COMPANY_EMAIL=
-COMPANY_WEBSITE=
+```php
+'name' => 'AIEC Institute',
+'crm_name' => 'AIEC CRM',
+'tagline' => 'Customer Relationship Management',
+'subtitle' => 'Study Abroad Lally Infosys',
+'logo_path' => 'images/aiec-logo.png',
+'icon_path' => 'images/aiec-icon.svg',
+'address_lines' => [
+    'Address line 1',
+    'Address line 2',
+],
+'phone' => '',
+'email' => '',
+'website' => 'https://example.com',
 ```
 
-Logo and icon paths are relative to the Laravel `public` directory. If `COMPANY_WEBSITE` is blank, the app uses `APP_URL`.
+Logo and icon paths are relative to the Laravel `public` directory.
 
 6. Run migrations:
 

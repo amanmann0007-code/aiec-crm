@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @php($company = config('company'))
-    <title>@yield('title', $company['crm_name'])</title>
-    <link rel="icon" href="{{ asset($company['icon_path']) }}" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="{{ asset($company['logo_path']) }}">
+    <title>@yield('title', config('company.crm_name', 'AIEC CRM'))</title>
+    <link rel="icon" href="{{ asset(config('company.icon_path', 'images/aiec-icon.svg')) }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ asset(config('company.logo_path', 'images/aiec-logo.png')) }}">
     <link href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/bootstrap-icons/bootstrap-icons.min.css') }}" rel="stylesheet">
     <style>
