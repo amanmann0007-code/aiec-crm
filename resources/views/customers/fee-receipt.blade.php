@@ -52,13 +52,27 @@
     </style>
 </head>
 <body>
+@php($company = config('company'))
 <div class="receipt-page">
     <div class="d-flex justify-content-between align-items-start gap-3 border-bottom pb-3 mb-4">
         <div>
-            <img src="{{ asset('images/aiec-logo.png') }}" alt="AIEC Institute" class="company-logo mb-2">
-            <div class="fw-bold">AIEC Institute</div>
-            <div class="receipt-meta">Study Abroad Lally Infosys</div>
-            <div class="receipt-meta">dev.studyabroadlallyinfosys.com</div>
+            <img src="{{ asset($company['logo_path']) }}" alt="{{ $company['name'] }}" class="company-logo mb-2">
+            <div class="fw-bold">{{ $company['name'] }}</div>
+            @if($company['subtitle'])
+                <div class="receipt-meta">{{ $company['subtitle'] }}</div>
+            @endif
+            @foreach($company['address_lines'] as $line)
+                <div class="receipt-meta">{{ $line }}</div>
+            @endforeach
+            @if($company['phone'])
+                <div class="receipt-meta">Phone: {{ $company['phone'] }}</div>
+            @endif
+            @if($company['email'])
+                <div class="receipt-meta">Email: {{ $company['email'] }}</div>
+            @endif
+            @if($company['website'])
+                <div class="receipt-meta">{{ $company['website'] }}</div>
+            @endif
         </div>
         <div class="text-end">
             <div class="receipt-title">Fee Receipt</div>

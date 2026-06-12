@@ -25,7 +25,7 @@ class WelcomeMail extends Mailable
      */
     public function build()
     {
-        return $this->subject('Welcome to AIEC CRM')
+        return $this->subject('Welcome to ' . config('company.crm_name'))
             ->view('emails.welcome');
     }
 }

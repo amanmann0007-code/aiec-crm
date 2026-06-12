@@ -1,16 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Login — AIEC Institute CRM')
+@section('title', 'Login - ' . config('company.crm_name'))
 
 @section('content')
+@php($company = config('company'))
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="text-center mb-4">
                 <a href="{{ url('/') }}">
-                    <img src="{{ asset('images/aiec-logo.png') }}" alt="AIEC Institute" class="login-brand__logo">
+                    <img src="{{ asset($company['logo_path']) }}" alt="{{ $company['name'] }}" class="login-brand__logo">
                 </a>
-                <p class="text-muted mt-3 mb-0">Customer Relationship Management</p>
+                <p class="text-muted mt-3 mb-0">{{ $company['tagline'] }}</p>
             </div>
             <div class="card shadow">
                 <div class="card-body p-4">
