@@ -85,6 +85,15 @@ class AppServiceProvider extends ServiceProvider
 
                 if (in_array($user->role, ['counselor', 'telecaller', 'agent'], true)) {
                     $followUpQuery->where(function ($query) use ($user) {
+                        if ($user->role === 'agent') {
+                            $query->where('user_id', $user->id)
+                                ->whereHas('customer', function ($customerQuery) use ($user) {
+                                    $customerQuery->where('agent_id', $user->id);
+                                });
+
+                            return;
+                        }
+
                         $query->where('user_id', $user->id)
                             ->orWhereHas('customer', function ($customerQuery) use ($user) {
                                 if ($user->role === 'counselor') {

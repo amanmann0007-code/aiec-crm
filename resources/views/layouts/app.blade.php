@@ -285,7 +285,7 @@
                     <a href="{{ route('customers.create') }}">Add Customer</a>
                 @endif
             @endif
-            @if(!in_array(auth()->user()->role, ['receptionist', 'agent'], true))
+            @if(auth()->user()->role !== 'receptionist')
                 <a href="{{ route('follow-ups.index') }}" class="sidebar-link-with-badge {{ request()->routeIs('follow-ups.*') ? 'active' : '' }}">
                     <span>My Follow-Ups</span>
                     @if(($overdueFollowUpsCount ?? 0) > 0 || ($todayFollowUpsCount ?? 0) > 0)

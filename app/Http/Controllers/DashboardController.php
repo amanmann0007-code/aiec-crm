@@ -232,6 +232,15 @@ class DashboardController extends Controller
         $scopeUser = $this->canViewAllStats($viewer) ? $selectedUser : $viewer;
         if ($scopeUser) {
             $query->where(function ($followUpQuery) use ($scopeUser) {
+                if ($scopeUser->role === 'agent') {
+                    $followUpQuery->where('user_id', $scopeUser->id)
+                        ->whereHas('customer', function ($customerQuery) use ($scopeUser) {
+                            $customerQuery->where('agent_id', $scopeUser->id);
+                        });
+
+                    return;
+                }
+
                 $followUpQuery->where('user_id', $scopeUser->id)
                     ->orWhereHas('customer', function ($customerQuery) use ($scopeUser) {
                         if ($scopeUser->role === 'counselor') {

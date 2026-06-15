@@ -26,8 +26,17 @@ class WebFollowUpController extends Controller
                 $customerQuery->whereNotIn('status', $noFollowUpStatuses);
             });
 
-        if (in_array($user->role, ['counselor', 'telecaller'], true)) {
+        if (in_array($user->role, ['counselor', 'telecaller', 'agent'], true)) {
             $base->where(function ($query) use ($user) {
+                if ($user->role === 'agent') {
+                    $query->where('user_id', $user->id)
+                        ->whereHas('customer', function ($customerQuery) use ($user) {
+                            $customerQuery->where('agent_id', $user->id);
+                        });
+
+                    return;
+                }
+
                 $query->where('user_id', $user->id)
                     ->orWhereHas('customer', function ($customerQuery) use ($user) {
                         if ($user->role === 'counselor') {
