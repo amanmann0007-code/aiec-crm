@@ -21,7 +21,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Role</label>
-                            <select name="role" class="form-select" required>
+                            <select name="role" id="user-role" class="form-select" required>
                                 @foreach($roles as $role)
                                     <option value="{{ $role }}" {{ old('role', 'telecaller') === $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
                                 @endforeach
@@ -36,10 +36,29 @@
                             </select>
                         </div>
                     </div>
+                    <div class="agent-fields border rounded p-3 mt-3">
+                        <div class="small text-muted mb-2">Agent details</div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact</label>
+                            <input name="agent_contact" class="form-control @error('agent_contact') is-invalid @enderror" value="{{ old('agent_contact') }}">
+                            @error('agent_contact')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Branch / City</label>
+                            <input name="agent_branch" class="form-control @error('agent_branch') is-invalid @enderror" value="{{ old('agent_branch') }}">
+                            @error('agent_branch')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Reference From</label>
+                            <input name="agent_reference_from" class="form-control @error('agent_reference_from') is-invalid @enderror" value="{{ old('agent_reference_from') }}">
+                            @error('agent_reference_from')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
                     <div class="row g-3 mt-0">
                         <div class="col-md-6">
                             <label class="form-label">Password</label>
                             <input name="password" type="password" class="form-control" required minlength="8">
+                            <div class="form-text agent-password-hint d-none">Leave blank to use default password: admin123</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Confirm Password</label>
@@ -62,6 +81,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
+                            <th>Agent Branch</th>
                             <th>Status</th>
                             <th></th>
                         </tr>
@@ -72,6 +92,7 @@
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->email }}</td>
                                 <td><span class="badge bg-secondary">{{ $user->role }}</span></td>
+                                <td>{{ $user->role === 'agent' ? ($user->agent_branch ?: '--') : '--' }}</td>
                                 <td><span class="badge {{ $user->status === 'active' ? 'bg-success' : 'bg-danger' }}">{{ $user->status }}</span></td>
                                 <td class="text-end">
                                     <a href="{{ route('users.edit', $user) }}" class="btn btn-sm btn-outline-primary">Manage</a>
@@ -79,7 +100,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">No users found.</td>
+                                <td colspan="6" class="text-center text-muted py-4">No users found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -92,3 +113,37 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const role = document.getElementById('user-role');
+    const agentFields = document.querySelector('.agent-fields');
+    const password = document.querySelector('input[name="password"]');
+    const passwordConfirmation = document.querySelector('input[name="password_confirmation"]');
+    const passwordHint = document.querySelector('.agent-password-hint');
+
+    function syncAgentFields() {
+        const isAgent = role && role.value === 'agent';
+        if (agentFields) {
+            agentFields.classList.toggle('d-none', !isAgent);
+            agentFields.querySelectorAll('input').forEach((input) => {
+                input.required = isAgent;
+            });
+        }
+        if (password && passwordConfirmation) {
+            password.required = !isAgent;
+            passwordConfirmation.required = !isAgent;
+        }
+        if (passwordHint) {
+            passwordHint.classList.toggle('d-none', !isAgent);
+        }
+    }
+
+    if (role) {
+        role.addEventListener('change', syncAgentFields);
+        syncAgentFields();
+    }
+});
+</script>
+@endpush

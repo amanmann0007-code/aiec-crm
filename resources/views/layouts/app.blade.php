@@ -265,7 +265,7 @@
                     @endif
                 </a>
             @endif
-            @if(auth()->user()->role !== 'telecaller')
+            @if(!in_array(auth()->user()->role, ['telecaller', 'agent'], true))
                 <a href="{{ route('new-cases.index') }}" class="sidebar-link-with-badge {{ request()->routeIs('new-cases.*') ? 'active' : '' }}">
                     <span>New Cases</span>
                     @if(($newCasesCount ?? 0) > 0)
@@ -276,13 +276,16 @@
             @if(auth()->user()->role === 'telecaller')
                 <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.index') || request()->routeIs('customers.show') ? 'active' : '' }}">My Leads</a>
                 <a href="{{ route('customers.create-telecaller') }}" class="{{ request()->routeIs('customers.create-telecaller') ? 'active' : '' }}">Add Lead</a>
+            @elseif(auth()->user()->role === 'agent')
+                <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.index') || request()->routeIs('customers.show') ? 'active' : '' }}">My Cases</a>
+                <a href="{{ route('customers.create') }}" class="{{ request()->routeIs('customers.create') ? 'active' : '' }}">Add Customer</a>
             @else
                 <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">Customers</a>
                 @if(in_array(auth()->user()->role, ['admin','receptionist','director']))
                     <a href="{{ route('customers.create') }}">Add Customer</a>
                 @endif
             @endif
-            @if(auth()->user()->role !== 'receptionist')
+            @if(!in_array(auth()->user()->role, ['receptionist', 'agent'], true))
                 <a href="{{ route('follow-ups.index') }}" class="sidebar-link-with-badge {{ request()->routeIs('follow-ups.*') ? 'active' : '' }}">
                     <span>My Follow-Ups</span>
                     @if(($overdueFollowUpsCount ?? 0) > 0 || ($todayFollowUpsCount ?? 0) > 0)

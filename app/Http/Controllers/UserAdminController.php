@@ -11,7 +11,7 @@ use Illuminate\Validation\Rule;
 
 class UserAdminController extends Controller
 {
-    private array $roles = ['admin', 'receptionist', 'counselor', 'telecaller', 'director'];
+    private array $roles = ['admin', 'receptionist', 'counselor', 'telecaller', 'director', 'agent'];
     private array $statuses = ['active', 'inactive'];
 
     public function index()
@@ -27,20 +27,33 @@ class UserAdminController extends Controller
 
     public function store(Request $request)
     {
+        $isAgent = $request->input('role') === 'agent';
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'agent_contact' => [$isAgent ? 'required' : 'nullable', 'string', 'max:50'],
+            'agent_branch' => [$isAgent ? 'required' : 'nullable', 'string', 'max:120'],
+            'agent_reference_from' => [$isAgent ? 'required' : 'nullable', 'string', 'max:255'],
             'role' => ['required', Rule::in($this->roles)],
             'status' => ['required', Rule::in($this->statuses)],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => [$isAgent ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
         ]);
+
+        $password = $validated['password'] ?? null;
+        if ($isAgent && !$password) {
+            $password = 'admin123';
+        }
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'agent_contact' => $isAgent ? $validated['agent_contact'] : null,
+            'agent_branch' => $isAgent ? $validated['agent_branch'] : null,
+            'agent_reference_from' => $isAgent ? $validated['agent_reference_from'] : null,
             'role' => $validated['role'],
             'status' => $validated['status'],
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make($password),
         ]);
 
         ActivityLogger::log(Auth::id(), 'CREATE_USER', 'Created user ' . $user->name . ' as ' . $user->role);
@@ -59,9 +72,14 @@ class UserAdminController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $isAgent = $request->input('role') === 'agent';
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'agent_contact' => [$isAgent ? 'required' : 'nullable', 'string', 'max:50'],
+            'agent_branch' => [$isAgent ? 'required' : 'nullable', 'string', 'max:120'],
+            'agent_reference_from' => [$isAgent ? 'required' : 'nullable', 'string', 'max:255'],
             'role' => ['required', Rule::in($this->roles)],
             'status' => ['required', Rule::in($this->statuses)],
         ]);
@@ -70,9 +88,12 @@ class UserAdminController extends Controller
             return back()->withErrors(['role' => 'You cannot remove your own active admin access.'])->withInput();
         }
 
-        $before = $user->only(['name', 'email', 'role', 'status']);
+        $before = $user->only(['name', 'email', 'agent_contact', 'agent_branch', 'agent_reference_from', 'role', 'status']);
+        $validated['agent_contact'] = $isAgent ? $validated['agent_contact'] : null;
+        $validated['agent_branch'] = $isAgent ? $validated['agent_branch'] : null;
+        $validated['agent_reference_from'] = $isAgent ? $validated['agent_reference_from'] : null;
         $user->update($validated);
-        $changes = $this->formatChanges($before, $user->only(['name', 'email', 'role', 'status']));
+        $changes = $this->formatChanges($before, $user->only(['name', 'email', 'agent_contact', 'agent_branch', 'agent_reference_from', 'role', 'status']));
 
         ActivityLogger::log(
             Auth::id(),
@@ -103,6 +124,9 @@ class UserAdminController extends Controller
         $labels = [
             'name' => 'Name',
             'email' => 'Email',
+            'agent_contact' => 'Agent contact',
+            'agent_branch' => 'Agent branch',
+            'agent_reference_from' => 'Reference from',
             'role' => 'Role',
             'status' => 'Status',
         ];

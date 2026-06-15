@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('page-title', $pageTitle ?? (auth()->user()->role === 'telecaller' ? 'My Leads' : 'Customers'))
+@section('page-title', $pageTitle ?? (auth()->user()->role === 'telecaller' ? 'My Leads' : (auth()->user()->role === 'agent' ? 'My Cases' : 'Customers')))
 
 @section('content')
 @php
@@ -51,7 +51,7 @@
     @else
         <div class="text-muted small">Showing cases with status <span class="badge bg-secondary">assigned</span></div>
     @endif
-    @if(in_array(auth()->user()->role, ['admin','receptionist','director']))
+    @if(in_array(auth()->user()->role, ['admin','receptionist','director','agent']))
         <a href="{{ route('customers.create') }}" class="btn btn-primary">+ Add Customer</a>
     @elseif(auth()->user()->role === 'telecaller')
         <a href="{{ route('customers.create-telecaller') }}" class="btn btn-primary">+ Add Lead</a>

@@ -119,6 +119,47 @@
             </div>
         </div>
 
+        @if($canViewAgentCommercial)
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">Agent Commercial Details</div>
+            <div class="card-body">
+                <p><strong>Agent:</strong> {{ optional($customer->agent)->name ?? '--' }}</p>
+                @if($canManageAgentCommercial)
+                    <form method="POST" action="{{ route('customers.agent-commercial.update', $customer) }}">
+                        @csrf
+                        <div class="mb-2">
+                            <label for="visa_duration" class="form-label small">Visa duration</label>
+                            <input type="text" name="visa_duration" id="visa_duration" class="form-control form-control-sm @error('visa_duration') is-invalid @enderror" value="{{ old('visa_duration', $customer->visa_duration) }}">
+                            @error('visa_duration')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label for="actual_cost" class="form-label small">Actual cost</label>
+                                <input type="number" name="actual_cost" id="actual_cost" class="form-control form-control-sm @error('actual_cost') is-invalid @enderror" min="0" step="0.01" value="{{ old('actual_cost', $customer->actual_cost) }}">
+                                @error('actual_cost')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label for="b2b_cost" class="form-label small">B2B cost</label>
+                                <input type="number" name="b2b_cost" id="b2b_cost" class="form-control form-control-sm @error('b2b_cost') is-invalid @enderror" min="0" step="0.01" value="{{ old('b2b_cost', $customer->b2b_cost) }}">
+                                @error('b2b_cost')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="mt-2 small">
+                            <strong>Margin:</strong>
+                            {{ $customer->margin !== null ? number_format((float) $customer->margin, 2) : '--' }}
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary mt-3">Save Commercial Details</button>
+                    </form>
+                @else
+                    <p><strong>Visa duration:</strong> {{ $customer->visa_duration ?? '--' }}</p>
+                    <p><strong>Actual cost:</strong> {{ $customer->actual_cost !== null ? number_format((float) $customer->actual_cost, 2) : '--' }}</p>
+                    <p><strong>B2B cost:</strong> {{ $customer->b2b_cost !== null ? number_format((float) $customer->b2b_cost, 2) : '--' }}</p>
+                    <p class="mb-0"><strong>Margin:</strong> {{ $customer->margin !== null ? number_format((float) $customer->margin, 2) : '--' }}</p>
+                @endif
+            </div>
+        </div>
+        @endif
+
         <div class="card shadow-sm mt-3">
             <div class="card-header">Intake</div>
             <div class="card-body">

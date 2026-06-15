@@ -31,6 +31,7 @@ class Customer extends Model
         'source',
         'reference_name',
         'telecaller_id',
+        'agent_id',
         'english_test',
         'english_subject_score',
         'test_type',
@@ -47,12 +48,19 @@ class Customer extends Model
         'special_remark',
         'special_remark_by',
         'special_remark_at',
+        'visa_duration',
+        'actual_cost',
+        'b2b_cost',
+        'margin',
         'created_by',
     ];
 
     protected $casts = [
         'visit_date' => 'date',
         'special_remark_at' => 'datetime',
+        'actual_cost' => 'decimal:2',
+        'b2b_cost' => 'decimal:2',
+        'margin' => 'decimal:2',
     ];
 
     public function activitySummary(): string
@@ -73,6 +81,11 @@ class Customer extends Model
     public function telecaller()
     {
         return $this->belongsTo(User::class, 'telecaller_id');
+    }
+
+    public function agent()
+    {
+        return $this->belongsTo(User::class, 'agent_id');
     }
 
     public function remarks()

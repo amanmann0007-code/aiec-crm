@@ -25,6 +25,8 @@ class SearchController extends Controller
             $query->where('assigned_counselor_id', $user->id);
         } elseif ($user->role === 'telecaller') {
             $query->where('telecaller_id', $user->id);
+        } elseif ($user->role === 'agent') {
+            $query->where('agent_id', $user->id);
         }
 
         $query->where(function ($builder) use ($deep, $like) {

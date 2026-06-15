@@ -8,6 +8,7 @@
         <form method="POST" action="{{ route('customers.store') }}" id="customer-form">
             @csrf
             @php
+                $isAgentUser = auth()->user()->role === 'agent';
                 $lead = $prefillLead ?? null;
                 $entry = $prefillEntry ?? null;
                 $residenceDefault = old('residence_country', optional($entry)->residence_country ?: 'india');
@@ -36,8 +37,9 @@
                 $previousRefusalDefault = old('previous_refusal', optional($entry)->previous_refusal ?: 'no');
                 $refusalCountriesDefault = old('refusal_countries', optional($entry)->refusal_countries ?: []);
                 $refusalText = is_array($refusalCountriesDefault) ? implode(', ', $refusalCountriesDefault) : '';
-                $sourceDefault = old('source', $lead ? 'Telecaller' : ($entry ? 'Online' : null));
+                $sourceDefault = old('source', $isAgentUser ? 'Agents' : ($lead ? 'Telecaller' : ($entry ? 'Online' : null)));
                 $telecallerDefault = old('telecaller_id', optional($lead)->telecaller_id);
+                $agentDefault = old('agent_id', $isAgentUser ? auth()->id() : null);
             @endphp
             @if($lead)
                 <input type="hidden" name="lead_id" value="{{ $lead->id }}">
@@ -204,11 +206,23 @@
             <div class="border rounded-3 p-3 mb-3">
                 <h6 class="mb-3 text-primary">Source & Assignment</h6>
                 <div class="row g-3">
+                    @if($isAgentUser)
+                        <input type="hidden" name="source" value="Agents">
+                        <input type="hidden" name="agent_id" value="{{ auth()->id() }}">
+                        <div class="col-md-4">
+                            <label class="form-label">Source</label>
+                            <input class="form-control" value="Agents" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Agent</label>
+                            <input class="form-control" value="{{ auth()->user()->name }}" readonly>
+                        </div>
+                    @else
                     <div class="col-md-4">
                         <label class="form-label">Source</label>
                         <select name="source" id="source" class="form-select">
                             <option value="">—</option>
-                            @foreach(['Walk-in','Reference','Telecaller','Online','Other'] as $s)
+                            @foreach(['Walk-in','Reference','Telecaller','Agents','Online','Other'] as $s)
                                 <option value="{{ $s }}" {{ $sourceDefault == $s ? 'selected' : '' }}>{{ $s }}</option>
                             @endforeach
                         </select>
@@ -226,6 +240,20 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-4 d-none" id="agent-wrap">
+                        <label class="form-label">Agent</label>
+                        <select name="agent_id" class="form-select @error('agent_id') is-invalid @enderror">
+                            <option value="">â€”</option>
+                            @foreach($agents as $agent)
+                                <option value="{{ $agent->id }}" {{ (string) $agentDefault === (string) $agent->id ? 'selected' : '' }}>{{ $agent->name }}{{ $agent->agent_branch ? ' - ' . $agent->agent_branch : '' }}</option>
+                            @endforeach
+                        </select>
+                        @error('agent_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
+                    @unless($isAgentUser)
                     <div class="col-md-4">
                         <label class="form-label">Assign Counselor *</label>
                         <select name="assigned_counselor_id" class="form-select @error('assigned_counselor_id') is-invalid @enderror" required>
@@ -238,6 +266,7 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
+                    @endunless
                 </div>
             </div>
 
@@ -271,6 +300,7 @@
 <script>
 const source = document.getElementById('source');
 const refWrap = document.getElementById('reference-wrap');
+const agentWrap = document.getElementById('agent-wrap');
 const engTest = document.getElementById('english_test');
 const engWrap = document.getElementById('english-wrap');
 const engSubjectWrap = document.getElementById('english-subject-score-wrap');
@@ -280,7 +310,12 @@ const refusWrap = document.getElementById('refusal-wrap');
 const form = document.getElementById('customer-form');
 
 function toggleSource() {
-    refWrap.classList.toggle('d-none', source.value !== 'Reference');
+    if (refWrap && source) {
+        refWrap.classList.toggle('d-none', source.value !== 'Reference');
+    }
+    if (agentWrap && source) {
+        agentWrap.classList.toggle('d-none', source.value !== 'Agents');
+    }
 }
 function toggleEnglish() {
     const hasEnglishTest = engTest.value === 'yes';
@@ -295,7 +330,7 @@ function toggleEnglish() {
 }
 function toggleRefusal() { refusWrap.classList.toggle('d-none', prevRef.value !== 'yes'); }
 
-source.addEventListener('change', toggleSource);
+if (source) source.addEventListener('change', toggleSource);
 engTest.addEventListener('change', toggleEnglish);
 prevRef.addEventListener('change', toggleRefusal);
 toggleSource(); toggleEnglish(); toggleRefusal();

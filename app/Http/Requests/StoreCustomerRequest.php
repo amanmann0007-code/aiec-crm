@@ -24,6 +24,7 @@ class StoreCustomerRequest extends FormRequest
 
     public function rules()
     {
+        $isAgent = optional($this->user())->role === 'agent';
         $leadId = $this->input('lead_id');
         $phoneRule = Rule::unique('customers', 'phone');
         if ($leadId && $this->routeIs('customers.store')) {
@@ -50,6 +51,9 @@ class StoreCustomerRequest extends FormRequest
             'source' => 'nullable|string|max:255',
             'reference_name' => 'nullable|string|max:255',
             'telecaller_id' => ['nullable', 'exists:users,id'],
+            'agent_id' => ['nullable', Rule::exists('users', 'id')->where(function ($query) {
+                $query->where('role', 'agent')->where('status', 'active');
+            })],
             'english_test' => 'nullable|in:yes,no',
             'english_subject_score' => ['nullable', 'required_if:english_test,no', 'string', 'max:50'],
             'test_type' => 'nullable|string|max:255',
@@ -62,7 +66,7 @@ class StoreCustomerRequest extends FormRequest
             'previous_refusal' => 'nullable|in:yes,no',
             'refusal_countries' => 'nullable|array',
             'refusal_countries.*' => 'string|max:255',
-            'assigned_counselor_id' => ['required', 'exists:users,id'],
+            'assigned_counselor_id' => [$isAgent ? 'nullable' : 'required', 'exists:users,id'],
             'status' => ['nullable', Rule::in(config('crm.customer_statuses', []))],
         ];
     }
@@ -73,6 +77,7 @@ class StoreCustomerRequest extends FormRequest
             'phone.unique' => 'Phone is already registered.',
             'assigned_counselor_id.required' => 'Select a counselor before creating the customer.',
             'english_subject_score.required_if' => 'Enter the English subject score when English Test is No.',
+            'agent_id.exists' => 'Select a valid active agent.',
         ];
     }
 

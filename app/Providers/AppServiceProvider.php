@@ -56,6 +56,8 @@ class AppServiceProvider extends ServiceProvider
                     $query->where('assigned_counselor_id', $user->id);
                 } elseif ($user->role === 'telecaller') {
                     $query->where('telecaller_id', $user->id);
+                } elseif ($user->role === 'agent') {
+                    $query->where('agent_id', $user->id);
                 }
 
                 $newCasesCount = $query->count();
@@ -81,7 +83,7 @@ class AppServiceProvider extends ServiceProvider
                         $customerQuery->whereNotIn('status', config('crm.statuses_no_follow_up', []));
                     });
 
-                if (in_array($user->role, ['counselor', 'telecaller'], true)) {
+                if (in_array($user->role, ['counselor', 'telecaller', 'agent'], true)) {
                     $followUpQuery->where(function ($query) use ($user) {
                         $query->where('user_id', $user->id)
                             ->orWhereHas('customer', function ($customerQuery) use ($user) {
@@ -89,6 +91,8 @@ class AppServiceProvider extends ServiceProvider
                                     $customerQuery->where('assigned_counselor_id', $user->id);
                                 } elseif ($user->role === 'telecaller') {
                                     $customerQuery->where('telecaller_id', $user->id);
+                                } elseif ($user->role === 'agent') {
+                                    $customerQuery->where('agent_id', $user->id);
                                 }
                             });
                     });

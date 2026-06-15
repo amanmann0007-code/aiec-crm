@@ -22,7 +22,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Role</label>
-                            <select name="role" class="form-select" required>
+                            <select name="role" id="user-role" class="form-select" required>
                                 @foreach($roles as $role)
                                     <option value="{{ $role }}" {{ old('role', $managedUser->role) === $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
                                 @endforeach
@@ -35,6 +35,24 @@
                                     <option value="{{ $status }}" {{ old('status', $managedUser->status) === $status ? 'selected' : '' }}>{{ ucfirst($status) }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+                    <div class="agent-fields border rounded p-3 mt-3">
+                        <div class="small text-muted mb-2">Agent details</div>
+                        <div class="mb-3">
+                            <label class="form-label">Contact</label>
+                            <input name="agent_contact" class="form-control @error('agent_contact') is-invalid @enderror" value="{{ old('agent_contact', $managedUser->agent_contact) }}">
+                            @error('agent_contact')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Branch / City</label>
+                            <input name="agent_branch" class="form-control @error('agent_branch') is-invalid @enderror" value="{{ old('agent_branch', $managedUser->agent_branch) }}">
+                            @error('agent_branch')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label">Reference From</label>
+                            <input name="agent_reference_from" class="form-control @error('agent_reference_from') is-invalid @enderror" value="{{ old('agent_reference_from', $managedUser->agent_reference_from) }}">
+                            @error('agent_reference_from')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
                     <div class="d-flex gap-2 mt-3">
@@ -68,3 +86,27 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const role = document.getElementById('user-role');
+    const agentFields = document.querySelector('.agent-fields');
+
+    function syncAgentFields() {
+        const isAgent = role && role.value === 'agent';
+        if (agentFields) {
+            agentFields.classList.toggle('d-none', !isAgent);
+            agentFields.querySelectorAll('input').forEach((input) => {
+                input.required = isAgent;
+            });
+        }
+    }
+
+    if (role) {
+        role.addEventListener('change', syncAgentFields);
+        syncAgentFields();
+    }
+});
+</script>
+@endpush

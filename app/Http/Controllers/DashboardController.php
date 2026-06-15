@@ -238,6 +238,8 @@ class DashboardController extends Controller
                             $customerQuery->where('assigned_counselor_id', $scopeUser->id);
                         } elseif ($scopeUser->role === 'telecaller') {
                             $customerQuery->where('telecaller_id', $scopeUser->id);
+                        } elseif ($scopeUser->role === 'agent') {
+                            $customerQuery->where('agent_id', $scopeUser->id);
                         } else {
                             $customerQuery->where('created_by', $scopeUser->id);
                         }
@@ -254,6 +256,8 @@ class DashboardController extends Controller
             $query->where('assigned_counselor_id', $scopeUser->id);
         } elseif ($scopeUser->role === 'telecaller') {
             $query->where('telecaller_id', $scopeUser->id);
+        } elseif ($scopeUser->role === 'agent') {
+            $query->where('agent_id', $scopeUser->id);
         } else {
             $query->where('created_by', $scopeUser->id);
         }

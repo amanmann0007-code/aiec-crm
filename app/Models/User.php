@@ -21,6 +21,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'agent_contact',
+        'agent_branch',
+        'agent_reference_from',
         'password',
         'role',
         'status',
@@ -53,6 +56,11 @@ class User extends Authenticatable
     public function telecallerCustomers()
     {
         return $this->hasMany(Customer::class, 'telecaller_id');
+    }
+
+    public function agentCustomers()
+    {
+        return $this->hasMany(Customer::class, 'agent_id');
     }
 
     public function mentionHandle(): string

@@ -63,10 +63,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/customers', [WebCustomerController::class, 'index'])->name('customers.index');
     Route::get('/customers/create', [WebCustomerController::class, 'create'])
         ->name('customers.create')
-        ->middleware('role:admin,receptionist,director');
+        ->middleware('role:admin,receptionist,director,agent');
     Route::post('/customers', [WebCustomerController::class, 'store'])
         ->name('customers.store')
-        ->middleware('role:admin,receptionist,director');
+        ->middleware('role:admin,receptionist,director,agent');
     Route::get('/customers/{customer}/edit', [WebCustomerController::class, 'edit'])
         ->name('customers.edit')
         ->middleware('role:admin,counselor');
@@ -93,6 +93,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/customers/{customer}/intake', [WebCustomerController::class, 'updateIntake'])
         ->name('customers.intake.update')
         ->middleware('role:admin,counselor,director');
+    Route::post('/customers/{customer}/agent-commercial', [WebCustomerController::class, 'updateAgentCommercial'])
+        ->name('customers.agent-commercial.update')
+        ->middleware('role:admin');
     Route::post('/customers/{customer}/documents', [WebDocumentController::class, 'store'])->name('customers.documents.store');
     Route::delete('/documents/{document}', [WebDocumentController::class, 'destroy'])->name('documents.destroy');
 

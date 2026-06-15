@@ -53,7 +53,9 @@ class WebCustomerController extends Controller
             'processStageOptions' => $processStageOptions,
             'sortColumn' => $sortColumn,
             'sortDirection' => $sortDirection,
-            'pageTitle' => Auth::user()->role === 'telecaller' ? 'My Leads' : 'Customers',
+            'pageTitle' => Auth::user()->role === 'telecaller'
+                ? 'My Leads'
+                : (Auth::user()->role === 'agent' ? 'My Cases' : 'Customers'),
             'showStatusFilter' => true,
             'showProcessFilter' => false,
             'emptyMessage' => 'No customers found.',
@@ -134,9 +136,10 @@ class WebCustomerController extends Controller
 
         $counselors = User::where('role', 'counselor')->where('status', 'active')->get();
         $telecallers = User::where('role', 'telecaller')->where('status', 'active')->get();
+        $agents = User::where('role', 'agent')->where('status', 'active')->orderBy('name')->get();
         $qualifications = Qualification::active()->orderBy('name')->pluck('name');
 
-        return view('customers.create', compact('counselors', 'telecallers', 'qualifications', 'prefillLead', 'prefillEntry'));
+        return view('customers.create', compact('counselors', 'telecallers', 'agents', 'qualifications', 'prefillLead', 'prefillEntry'));
     }
 
     public function createTelecaller()
@@ -179,6 +182,17 @@ class WebCustomerController extends Controller
         }
         if (($validated['source'] ?? '') === 'Telecaller' && empty($validated['telecaller_id'])) {
             return back()->withErrors(['telecaller_id' => 'Select a telecaller.'])->withInput();
+        }
+        if (Auth::user()->role === 'agent') {
+            $validated['source'] = 'Agents';
+            $validated['agent_id'] = Auth::id();
+            $validated['reference_name'] = Auth::user()->name;
+            $validated['assigned_counselor_id'] = null;
+            $validated['telecaller_id'] = null;
+        } elseif (($validated['source'] ?? '') === 'Agents' && empty($validated['agent_id'])) {
+            return back()->withErrors(['agent_id' => 'Select an agent.'])->withInput();
+        } elseif (($validated['source'] ?? '') !== 'Agents') {
+            $validated['agent_id'] = null;
         }
 
         $customer = DB::transaction(function () use ($validated) {
@@ -264,6 +278,7 @@ class WebCustomerController extends Controller
                 ? 'Marked visiting client ready as customer '
                 : ($entryId ? 'Submitted tab entry as customer ' : 'Added customer ');
             ActivityLogger::log(Auth::id(), 'ADD_CUSTOMER', $actionText . $customer->activitySummary(), $customer->id);
+            $this->notifyAdminsAboutNewCustomer($customer, Auth::user());
 
             return $customer;
         });
@@ -285,10 +300,11 @@ class WebCustomerController extends Controller
 
         $counselors = User::where('role', 'counselor')->where('status', 'active')->get();
         $telecallers = User::where('role', 'telecaller')->where('status', 'active')->get();
+        $agents = User::where('role', 'agent')->where('status', 'active')->orderBy('name')->get();
         $qualifications = Qualification::active()->orderBy('name')->pluck('name');
         $existingRefusalCountries = $customer->refusals()->pluck('country')->all();
 
-        return view('customers.edit', compact('customer', 'counselors', 'telecallers', 'qualifications', 'existingRefusalCountries'));
+        return view('customers.edit', compact('customer', 'counselors', 'telecallers', 'agents', 'qualifications', 'existingRefusalCountries'));
     }
 
     public function update(UpdateCustomerRequest $request, Customer $customer)
@@ -376,6 +392,41 @@ class WebCustomerController extends Controller
         return redirect()->route('customers.show', $customer)->with('success', 'Intake updated.');
     }
 
+    public function updateAgentCommercial(Request $request, Customer $customer)
+    {
+        if (Auth::user()->role !== 'admin') {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'visa_duration' => ['nullable', 'string', 'max:120'],
+            'actual_cost' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'b2b_cost' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+        ]);
+
+        $actualCost = $validated['actual_cost'] ?? null;
+        $b2bCost = $validated['b2b_cost'] ?? null;
+        $margin = ($actualCost !== null && $b2bCost !== null)
+            ? round((float) $actualCost - (float) $b2bCost, 2)
+            : null;
+
+        $customer->update([
+            'visa_duration' => $validated['visa_duration'] ?? null,
+            'actual_cost' => $actualCost,
+            'b2b_cost' => $b2bCost,
+            'margin' => $margin,
+        ]);
+
+        ActivityLogger::log(
+            Auth::id(),
+            'UPDATE_AGENT_COMMERCIAL',
+            'Updated agent commercial details for ' . $customer->activitySummary(),
+            $customer->id
+        );
+
+        return redirect()->route('customers.show', $customer)->with('success', 'Agent commercial details updated.');
+    }
+
     public function storeSpecialRemark(Request $request, Customer $customer)
     {
         $this->authorizeSpecialRemarkEntry($customer);
@@ -420,6 +471,7 @@ class WebCustomerController extends Controller
         $relations = [
             'counselor',
             'telecaller',
+            'agent',
             'refusals',
             'remarks' => function ($remarkQuery) {
                 $remarkQuery->latest('id');
@@ -456,6 +508,9 @@ class WebCustomerController extends Controller
         $canAddSpecialRemark = Auth::user()->role === 'counselor'
             && $customer->assigned_counselor_id === Auth::id()
             && trim((string) $customer->special_remark) === '';
+        $canViewAgentCommercial = Auth::user()->role === 'admin'
+            || (Auth::user()->role === 'agent' && $customer->agent_id === Auth::id());
+        $canManageAgentCommercial = Auth::user()->role === 'admin';
 
         return view('customers.show', compact(
             'customer',
@@ -468,7 +523,9 @@ class WebCustomerController extends Controller
             'canAddFees',
             'canManageIntake',
             'canViewSpecialRemark',
-            'canAddSpecialRemark'
+            'canAddSpecialRemark',
+            'canViewAgentCommercial',
+            'canManageAgentCommercial'
         ));
     }
 
@@ -494,6 +551,8 @@ class WebCustomerController extends Controller
             $query->where('assigned_counselor_id', $user->id);
         } elseif ($user->role === 'telecaller') {
             $query->where('telecaller_id', $user->id);
+        } elseif ($user->role === 'agent') {
+            $query->where('agent_id', $user->id);
         }
 
         return $query;
@@ -798,6 +857,13 @@ class WebCustomerController extends Controller
         if ($user->role === 'telecaller' && $customer->telecaller_id === $user->id) {
             return;
         }
+        if ($user->role === 'agent') {
+            if ($customer->agent_id === $user->id) {
+                return;
+            }
+
+            abort(403);
+        }
         if (Notification::where('user_id', $user->id)->where('customer_id', $customer->id)->exists()) {
             return;
         }
@@ -831,5 +897,26 @@ class WebCustomerController extends Controller
         if (!$user || $user->role !== 'counselor' || $customer->assigned_counselor_id !== $user->id) {
             abort(403);
         }
+    }
+
+    private function notifyAdminsAboutNewCustomer(Customer $customer, User $creator): void
+    {
+        $agentName = optional($customer->agent)->name ?: ($customer->agent_id ? $this->userLabel($customer->agent_id) : null);
+        $creatorLabel = $creator->role === 'agent'
+            ? 'Agent ' . $creator->name
+            : ucfirst($creator->role) . ' ' . $creator->name;
+        $agentText = $agentName ? ' Agent: ' . $agentName . '.' : '';
+
+        User::where('role', 'admin')
+            ->where('status', 'active')
+            ->pluck('id')
+            ->each(function ($adminId) use ($customer, $creatorLabel, $agentText) {
+                Notification::create([
+                    'user_id' => $adminId,
+                    'customer_id' => $customer->id,
+                    'title' => 'New customer registered',
+                    'message' => $creatorLabel . ' registered new customer ' . $customer->activitySummary() . '.' . $agentText,
+                ]);
+            });
     }
 }
