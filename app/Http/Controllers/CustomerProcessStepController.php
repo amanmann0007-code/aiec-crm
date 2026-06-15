@@ -29,9 +29,11 @@ class CustomerProcessStepController extends Controller
             $canCounselorReopenDropout = Auth::user()->role === 'counselor'
                 && $customer->assigned_counselor_id === Auth::id()
                 && $step['key'] === ProcessTimelineService::DROPOUT_KEY;
+            $canAgentReopen = Auth::user()->role === 'agent'
+                && $customer->agent_id === Auth::id();
 
-            if (!in_array(Auth::user()->role, ['admin', 'director'], true) && !$canCounselorReopenDropout) {
-                abort(403, 'Only admin, director, or assigned counselor for Dropout can reopen this process step.');
+            if (!in_array(Auth::user()->role, ['admin', 'director'], true) && !$canCounselorReopenDropout && !$canAgentReopen) {
+                abort(403, 'Only admin, director, assigned agent, or assigned counselor for Dropout can reopen this process step.');
             }
 
             $processStep->delete();
@@ -92,6 +94,14 @@ class CustomerProcessStepController extends Controller
 
         if ($user->role === 'counselor' && $customer->assigned_counselor_id === $user->id) {
             return;
+        }
+
+        if ($user->role === 'agent') {
+            if ($customer->agent_id === $user->id) {
+                return;
+            }
+
+            abort(403);
         }
 
         if (Notification::where('user_id', $user->id)->where('customer_id', $customer->id)->exists()) {

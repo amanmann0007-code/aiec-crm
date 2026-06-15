@@ -498,9 +498,10 @@ class WebCustomerController extends Controller
         $activityLogs = Auth::user()->role === 'admin' ? $customer->activityLogs : collect();
         $processTimeline = $this->timelineSteps($customer->visa_type);
         $completedProcessSteps = $customer->processSteps->keyBy('step_key');
-        $canViewProcessTimeline = in_array(Auth::user()->role, ['admin', 'director', 'receptionist', 'counselor'], true);
-        $canCompleteProcessTimeline = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true);
-        $canReopenProcessTimeline = in_array(Auth::user()->role, ['admin', 'director'], true);
+        $isAssignedAgent = Auth::user()->role === 'agent' && $customer->agent_id === Auth::id();
+        $canViewProcessTimeline = in_array(Auth::user()->role, ['admin', 'director', 'receptionist', 'counselor'], true) || $isAssignedAgent;
+        $canCompleteProcessTimeline = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true) || $isAssignedAgent;
+        $canReopenProcessTimeline = in_array(Auth::user()->role, ['admin', 'director'], true) || $isAssignedAgent;
         $canAddFees = Auth::user()->role !== 'telecaller';
         $canManageIntake = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id())

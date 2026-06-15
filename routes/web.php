@@ -75,7 +75,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,counselor');
     Route::post('/customers/{customer}/process-steps/{stepKey}', [CustomerProcessStepController::class, 'complete'])
         ->name('customers.process-steps.complete')
-        ->middleware('role:admin,counselor,director');
+        ->middleware('role:admin,counselor,director,agent');
     Route::get('/customers/leads/create', [WebCustomerController::class, 'createTelecaller'])
         ->name('customers.create-telecaller')
         ->middleware('role:telecaller');
