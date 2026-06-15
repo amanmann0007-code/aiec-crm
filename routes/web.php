@@ -92,7 +92,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/customers/{customer}/fees/receipt', [WebCustomerFeeController::class, 'receipt'])->name('customers.fees.receipt');
     Route::post('/customers/{customer}/intake', [WebCustomerController::class, 'updateIntake'])
         ->name('customers.intake.update')
-        ->middleware('role:admin,counselor,director');
+        ->middleware('role:admin,counselor,director,agent');
     Route::post('/customers/{customer}/agent-commercial', [WebCustomerController::class, 'updateAgentCommercial'])
         ->name('customers.agent-commercial.update')
         ->middleware('role:admin');

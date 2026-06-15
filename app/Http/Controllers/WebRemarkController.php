@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Remark;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\FollowUpService;
 use App\Services\GoogleChatNotifier;
@@ -24,6 +25,20 @@ class WebRemarkController extends Controller
             'tagged_user_ids' => 'nullable|array',
             'tagged_user_ids.*' => 'exists:users,id',
         ]);
+
+        if (Auth::user()->role === 'agent' && !empty($validated['tagged_user_ids'])) {
+            $taggedCount = count(array_unique($validated['tagged_user_ids']));
+            $adminTaggedCount = User::whereIn('id', $validated['tagged_user_ids'])
+                ->where('role', 'admin')
+                ->where('status', 'active')
+                ->count();
+
+            if ($adminTaggedCount !== $taggedCount) {
+                return back()
+                    ->withErrors(['message' => 'Agents can only tag active admin users.'])
+                    ->withInput();
+            }
+        }
 
         $status = $validated['status_update'] ?? '';
         $requiresFollowUp = config('crm.statuses_requiring_follow_up', []);

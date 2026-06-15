@@ -10,10 +10,19 @@ class UserMentionController extends Controller
     public function search(Request $request)
     {
         $q = strtolower(trim($request->query('q', '')));
+        $user = $request->user();
 
         $users = User::query()
             ->where('status', 'active')
-            ->when($q !== '', function ($query) use ($q) {
+            ->when($user && $user->role === 'agent', function ($query) {
+                $query->where('role', 'admin');
+            })
+            ->when($q !== '', function ($query) use ($q, $user) {
+                if ($user && $user->role === 'agent') {
+                    $query->where('name', 'like', "{$q}%");
+                    return;
+                }
+
                 $compact = preg_replace('/[^a-z0-9]/', '', $q);
                 $dotted = str_replace([' ', '_', '-'], '.', $q);
                 $dashed = str_replace([' ', '_', '.'], '-', $q);

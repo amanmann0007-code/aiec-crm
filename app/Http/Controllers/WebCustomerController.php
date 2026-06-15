@@ -407,7 +407,7 @@ class WebCustomerController extends Controller
         $actualCost = $validated['actual_cost'] ?? null;
         $b2bCost = $validated['b2b_cost'] ?? null;
         $margin = ($actualCost !== null && $b2bCost !== null)
-            ? round((float) $actualCost - (float) $b2bCost, 2)
+            ? round((float) $b2bCost - (float) $actualCost, 2)
             : null;
 
         $customer->update([
@@ -503,7 +503,8 @@ class WebCustomerController extends Controller
         $canReopenProcessTimeline = in_array(Auth::user()->role, ['admin', 'director'], true);
         $canAddFees = Auth::user()->role !== 'telecaller';
         $canManageIntake = in_array(Auth::user()->role, ['admin', 'director'], true)
-            || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id());
+            || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id())
+            || (Auth::user()->role === 'agent' && $customer->agent_id === Auth::id());
         $canViewSpecialRemark = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true);
         $canAddSpecialRemark = Auth::user()->role === 'counselor'
             && $customer->assigned_counselor_id === Auth::id()
@@ -875,7 +876,7 @@ class WebCustomerController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user || !in_array($user->role, ['admin', 'director', 'counselor'], true)) {
+        if (!$user || !in_array($user->role, ['admin', 'director', 'counselor', 'agent'], true)) {
             abort(403);
         }
 
@@ -884,6 +885,10 @@ class WebCustomerController extends Controller
         }
 
         if ($user->role === 'counselor' && $customer->assigned_counselor_id === $user->id) {
+            return;
+        }
+
+        if ($user->role === 'agent' && $customer->agent_id === $user->id) {
             return;
         }
 

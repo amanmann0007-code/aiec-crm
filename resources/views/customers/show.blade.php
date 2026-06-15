@@ -102,8 +102,10 @@
                 </p>
                 <p><strong>Visa:</strong> {{ $customer->visa_type ?? '—' }}</p>
                 <p><strong>Status:</strong> <span class="badge bg-primary" id="customer-status-badge">{{ $customer->status }}</span></p>
+                @if(auth()->user()->role !== 'agent')
                 <p><strong>Counselor:</strong> {{ optional($customer->counselor)->name ?? '—' }}</p>
                 <p><strong>Telecaller:</strong> {{ optional($customer->telecaller)->name ?? '—' }}</p>
+                @endif
                 <p><strong>Qualification:</strong> {{ $customer->qualification ?? '—' }}</p>
                 <p><strong>Pass-out Year:</strong> {{ $customer->qualification_year ?? '—' }}</p>
                 <p><strong>GAP:</strong> {{ $customer->gap_years ?? '—' }}</p>
@@ -152,9 +154,11 @@
                     </form>
                 @else
                     <p><strong>Visa duration:</strong> {{ $customer->visa_duration ?? '--' }}</p>
-                    <p><strong>Actual cost:</strong> {{ $customer->actual_cost !== null ? number_format((float) $customer->actual_cost, 2) : '--' }}</p>
                     <p><strong>B2B cost:</strong> {{ $customer->b2b_cost !== null ? number_format((float) $customer->b2b_cost, 2) : '--' }}</p>
+                    @if(auth()->user()->role !== 'agent')
+                    <p><strong>Actual cost:</strong> {{ $customer->actual_cost !== null ? number_format((float) $customer->actual_cost, 2) : '--' }}</p>
                     <p class="mb-0"><strong>Margin:</strong> {{ $customer->margin !== null ? number_format((float) $customer->margin, 2) : '--' }}</p>
+                    @endif
                 @endif
             </div>
         </div>
