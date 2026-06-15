@@ -5,6 +5,7 @@
 @section('content')
 @php
     $dashboardFilterParams = ($isSuperAdmin ?? false) && !empty($selectedUserId) ? ['user_id' => $selectedUserId] : [];
+    $showLeadSourceReport = ($user->role ?? null) !== 'agent';
 @endphp
 <form method="GET" class="card shadow-sm mb-3">
     <div class="card-body d-flex flex-wrap align-items-end gap-3">
@@ -202,6 +203,7 @@
 </div>
 @endif
 
+@if($showLeadSourceReport)
 <div class="row g-4 mb-4">
     <div class="col-12">
         <div class="card shadow-sm lead-status-card">
@@ -236,6 +238,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <div class="row g-4 mb-4">
     <div class="col-xl-6">
@@ -479,10 +482,10 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endpush
 
-@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty() || $leadStatusCounts->sum() > 0 || $sourceCounts->isNotEmpty())
+@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty() || ($showLeadSourceReport && ($leadStatusCounts->sum() > 0 || $sourceCounts->isNotEmpty())))
 @push('scripts')
 <script src="{{ asset('vendor/apexcharts/apexcharts.min.js') }}"></script>
-@if($leadStatusCounts->sum() > 0)
+@if($showLeadSourceReport && $leadStatusCounts->sum() > 0)
 <script>
 (function () {
     const labels = @json($leadStatusCounts->keys()->values()->map(fn ($status) => ucfirst($status)));
@@ -548,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 @endif
-@if($sourceCounts->isNotEmpty())
+@if($showLeadSourceReport && $sourceCounts->isNotEmpty())
 <script>
 (function () {
     const labels = @json($sourceCounts->keys()->values());

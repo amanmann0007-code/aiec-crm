@@ -265,7 +265,7 @@
                     @endif
                 </a>
             @endif
-            @if(!in_array(auth()->user()->role, ['telecaller', 'agent'], true))
+            @if(auth()->user()->role !== 'telecaller')
                 <a href="{{ route('new-cases.index') }}" class="sidebar-link-with-badge {{ request()->routeIs('new-cases.*') ? 'active' : '' }}">
                     <span>New Cases</span>
                     @if(($newCasesCount ?? 0) > 0)
