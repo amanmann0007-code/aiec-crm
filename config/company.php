@@ -1,12 +1,12 @@
 <?php
 
 return [
-    'name' => 'AIEC Institute',
-    'crm_name' => 'AIEC CRM',
+    'name' => 'Divinora Immigration',
+    'crm_name' => 'Divinora CRM',
     'tagline' => 'Customer Relationship Management',
-    'subtitle' => 'Study Abroad Lally Infosys',
-    'logo_path' => 'images/aiec-logo.png',
-    'icon_path' => 'images/aiec-icon.svg',
+    'subtitle' => 'Study Abroad',
+    'logo_path' => 'images/divinora.png',
+    'icon_path' => 'images/divinora.png',
     'address_lines' => [
         '',
         '',
