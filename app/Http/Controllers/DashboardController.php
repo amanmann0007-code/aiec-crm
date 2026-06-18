@@ -129,6 +129,30 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->pluck('total', 'source_label');
 
+        $canViewAgentCaseReport = in_array($user->role, ['admin', 'director'], true);
+        $agentCaseCounts = collect();
+        if ($canViewAgentCaseReport) {
+            $agentCaseCounts = User::where('role', 'agent')
+                ->where('status', 'active')
+                ->withCount([
+                    'agentCustomers as cases_count' => function ($query) use ($fromDate, $toDate, $selectedUser, $visibleCustomerIds) {
+                        $query->whereBetween('created_at', [$fromDate, $toDate]);
+
+                        if ($selectedUser) {
+                            $query->whereIn('id', $visibleCustomerIds);
+                        }
+                    },
+                ])
+                ->orderByDesc('cases_count')
+                ->orderBy('name')
+                ->get()
+                ->mapWithKeys(function ($agent) {
+                    $label = $agent->name . ($agent->agent_branch ? ' - ' . $agent->agent_branch : '');
+
+                    return [$label => (int) $agent->cases_count];
+                });
+        }
+
         $enrollmentBaseQuery = $this->customerScopeQuery($user, $selectedUser)
             ->whereBetween('created_at', [$fromDate, $toDate]);
 
@@ -181,6 +205,8 @@ class DashboardController extends Controller
             'feeStats',
             'leadStatusCounts',
             'sourceCounts',
+            'canViewAgentCaseReport',
+            'agentCaseCounts',
             'enrollmentStats'
         ));
     }

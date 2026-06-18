@@ -203,6 +203,26 @@
 </div>
 @endif
 
+@if($canViewAgentCaseReport ?? false)
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm agent-case-card">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span>Agent case report</span>
+                <span class="text-muted small">{{ $fromDate->format('d M Y') }} - {{ $toDate->format('d M Y') }}</span>
+            </div>
+            <div class="card-body">
+                @if($agentCaseCounts->sum() > 0)
+                    <div id="agent-case-chart"></div>
+                @else
+                    <div class="text-center text-muted py-5">No agent cases found in this date range.</div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @if($showLeadSourceReport)
 <div class="row g-4 mb-4">
     <div class="col-12">
@@ -353,6 +373,7 @@
 <style>
     .status-overview-card #status-chart { min-height: 320px; }
     .process-overview-card #process-chart { min-height: 320px; }
+    .agent-case-card #agent-case-chart { min-height: 320px; }
     .lead-status-card #lead-status-chart,
     .lead-status-card #source-chart { min-height: 280px; }
     .report-chart-panel {
@@ -482,9 +503,73 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endpush
 
-@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty() || ($showLeadSourceReport && ($leadStatusCounts->sum() > 0 || $sourceCounts->isNotEmpty())))
+@if($statusCounts->isNotEmpty() || $processTimelineCounts->isNotEmpty() || (($canViewAgentCaseReport ?? false) && $agentCaseCounts->sum() > 0) || ($showLeadSourceReport && ($leadStatusCounts->sum() > 0 || $sourceCounts->isNotEmpty())))
 @push('scripts')
 <script src="{{ asset('vendor/apexcharts/apexcharts.min.js') }}"></script>
+@if(($canViewAgentCaseReport ?? false) && $agentCaseCounts->sum() > 0)
+<script>
+(function () {
+    const labels = @json($agentCaseCounts->keys()->values());
+    const counts = @json($agentCaseCounts->values());
+    const chartEl = document.querySelector('#agent-case-chart');
+    if (!chartEl) return;
+
+    const chart = new ApexCharts(chartEl, {
+        chart: {
+            type: 'bar',
+            height: Math.max(320, labels.length * 44),
+            fontFamily: 'inherit',
+            toolbar: { show: false }
+        },
+        series: [{
+            name: 'Cases',
+            data: counts
+        }],
+        xaxis: {
+            categories: labels,
+            labels: {
+                formatter: function (value) {
+                    return Math.round(value);
+                }
+            }
+        },
+        yaxis: {
+            labels: {
+                style: { fontWeight: 600 },
+                maxWidth: 260
+            }
+        },
+        colors: ['#8b5cf6'],
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 6,
+                dataLabels: { position: 'top' }
+            }
+        },
+        dataLabels: {
+            enabled: true,
+            offsetX: 8,
+            style: {
+                colors: ['#0f172a'],
+                fontSize: '14px',
+                fontWeight: 700
+            }
+        },
+        tooltip: {
+            y: {
+                formatter: function (value) {
+                    return value + ' case' + (value === 1 ? '' : 's');
+                }
+            }
+        },
+        grid: { borderColor: '#e2e8f0' }
+    });
+
+    chart.render();
+})();
+</script>
+@endif
 @if($showLeadSourceReport && $leadStatusCounts->sum() > 0)
 <script>
 (function () {
