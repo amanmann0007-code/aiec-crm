@@ -35,11 +35,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/search/customers', [SearchController::class, 'customers'])->name('search.customers');
     Route::get('/users/mention-search', [UserMentionController::class, 'search'])->name('users.mention-search');
-    Route::get('/users', [UserAdminController::class, 'index'])->name('users.index')->middleware('role:admin');
-    Route::post('/users', [UserAdminController::class, 'store'])->name('users.store')->middleware('role:admin');
-    Route::get('/users/{user}/edit', [UserAdminController::class, 'edit'])->name('users.edit')->middleware('role:admin');
-    Route::put('/users/{user}', [UserAdminController::class, 'update'])->name('users.update')->middleware('role:admin');
-    Route::put('/users/{user}/password', [UserAdminController::class, 'updatePassword'])->name('users.password')->middleware('role:admin');
+    Route::get('/users', [UserAdminController::class, 'index'])->name('users.index')->middleware('role:admin,director');
+    Route::post('/users', [UserAdminController::class, 'store'])->name('users.store')->middleware('role:admin,director');
+    Route::get('/users/{user}/edit', [UserAdminController::class, 'edit'])->name('users.edit')->middleware('role:admin,director');
+    Route::put('/users/{user}', [UserAdminController::class, 'update'])->name('users.update')->middleware('role:admin,director');
+    Route::put('/users/{user}/password', [UserAdminController::class, 'updatePassword'])->name('users.password')->middleware('role:admin,director');
     Route::get('/process-timelines', [ProcessTimelineAdminController::class, 'index'])->name('process-timelines.index')->middleware('role:admin');
     Route::post('/process-timelines', [ProcessTimelineAdminController::class, 'store'])->name('process-timelines.store')->middleware('role:admin');
     Route::post('/process-timelines/save', [ProcessTimelineAdminController::class, 'saveAll'])->name('process-timelines.save')->middleware('role:admin');

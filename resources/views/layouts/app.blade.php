@@ -300,8 +300,10 @@
                     @endif
                 </a>
             @endif
-            @if(auth()->user()->role === 'admin')
+            @if(in_array(auth()->user()->role, ['admin', 'director'], true))
                 <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">Users</a>
+            @endif
+            @if(auth()->user()->role === 'admin')
                 <a href="{{ route('process-timelines.index') }}" class="{{ request()->routeIs('process-timelines.*') ? 'active' : '' }}">Process Timelines</a>
                 <a href="{{ route('qualifications.index') }}" class="{{ request()->routeIs('qualifications.*') ? 'active' : '' }}">Qualifications</a>
                 <a href="{{ route('google-chat-settings.edit') }}" class="{{ request()->routeIs('google-chat-settings.*') ? 'active' : '' }}">Google Chat</a>

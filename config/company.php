@@ -1,12 +1,12 @@
 <?php
 
 return [
-    'name' => 'Divinora Immigration',
+    'name' => 'Divinora Global',
     'crm_name' => 'Divinora CRM',
     'tagline' => 'Customer Relationship Management',
     'subtitle' => 'Study Abroad',
-    'logo_path' => 'images/divinora.png',
-    'icon_path' => 'images/divinora.png',
+    'logo_path' => 'images/divilogo.png',
+    'icon_path' => 'images/divilogo.svg',
     'address_lines' => [
         '',
         '',
@@ -14,5 +14,5 @@ return [
     ],
     'phone' => '',
     'email' => '',
-    'website' => 'http://localhost',
+    'website' => 'https://divinoraglobal.com',
 ];
