@@ -34,8 +34,6 @@
                         </div>
                         <button type="submit" class="btn btn-primary w-100" style="background-color: #1a4d8f; border-color: #1a4d8f;">Login</button>
                     </form>
-                    <hr>
-                    <small class="text-muted">Demo: admin@test.com / password (run <code>php artisan db:seed</code>)</small>
                 </div>
             </div>
         </div>
