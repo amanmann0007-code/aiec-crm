@@ -218,31 +218,31 @@
                             <input class="form-control" value="{{ auth()->user()->name }}" readonly>
                         </div>
                     @else
+                    @if($lead)
+                        <input type="hidden" name="source" value="Telecaller">
+                        <input type="hidden" name="telecaller_id" value="{{ $telecallerDefault }}">
+                        <div class="col-md-4">
+                            <label class="form-label">Source</label>
+                            <input class="form-control" value="Telecaller" readonly>
+                        </div>
+                    @else
                     <div class="col-md-4">
                         <label class="form-label">Source</label>
                         <select name="source" id="source" class="form-select">
                             <option value="">—</option>
-                            @foreach(['Walk-in','Reference','Telecaller','Agents','Online','Other'] as $s)
+                            @foreach(['Walk-in','Reference','Agents','Online','Other'] as $s)
                                 <option value="{{ $s }}" {{ $sourceDefault == $s ? 'selected' : '' }}>{{ $s }}</option>
                             @endforeach
                         </select>
                     </div>
+                    @endif
                     <div class="col-md-4 d-none" id="reference-wrap">
                         <label class="form-label">Reference Name</label>
                         <input name="reference_name" class="form-control" value="{{ old('reference_name') }}">
                     </div>
-                    <div class="col-md-4" id="telecaller-wrap">
-                        <label class="form-label">Telecaller</label>
-                        <select name="telecaller_id" class="form-select">
-                            <option value="">—</option>
-                            @foreach($telecallers as $t)
-                                <option value="{{ $t->id }}" {{ (string) $telecallerDefault === (string) $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
                     <div class="col-md-4 d-none" id="agent-wrap">
                         <label class="form-label">Agent</label>
-                        <select name="agent_id" class="form-select @error('agent_id') is-invalid @enderror">
+                        <select name="agent_id" id="agent_id" class="form-select @error('agent_id') is-invalid @enderror">
                             <option value="">â€”</option>
                             @foreach($agents as $agent)
                                 <option value="{{ $agent->id }}" {{ (string) $agentDefault === (string) $agent->id ? 'selected' : '' }}>{{ $agent->name }}{{ $agent->agent_branch ? ' - ' . $agent->agent_branch : '' }}</option>
@@ -254,9 +254,9 @@
                     </div>
                     @endif
                     @unless($isAgentUser)
-                    <div class="col-md-4">
-                        <label class="form-label">Assign Counselor *</label>
-                        <select name="assigned_counselor_id" class="form-select @error('assigned_counselor_id') is-invalid @enderror" required>
+                    <div class="col-md-4" id="counselor-wrap">
+                        <label class="form-label">Assign Counselor <span class="text-danger counselor-required-marker">*</span></label>
+                        <select name="assigned_counselor_id" id="assigned_counselor_id" class="form-select @error('assigned_counselor_id') is-invalid @enderror" required>
                             <option value="">—</option>
                             @foreach($counselors as $c)
                                 <option value="{{ $c->id }}" {{ old('assigned_counselor_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
@@ -301,6 +301,9 @@
 const source = document.getElementById('source');
 const refWrap = document.getElementById('reference-wrap');
 const agentWrap = document.getElementById('agent-wrap');
+const agentSelect = document.getElementById('agent_id');
+const counselorWrap = document.getElementById('counselor-wrap');
+const counselorSelect = document.getElementById('assigned_counselor_id');
 const engTest = document.getElementById('english_test');
 const engWrap = document.getElementById('english-wrap');
 const engSubjectWrap = document.getElementById('english-subject-score-wrap');
@@ -314,7 +317,24 @@ function toggleSource() {
         refWrap.classList.toggle('d-none', source.value !== 'Reference');
     }
     if (agentWrap && source) {
-        agentWrap.classList.toggle('d-none', source.value !== 'Agents');
+        const isAgentSource = source.value === 'Agents';
+        agentWrap.classList.toggle('d-none', !isAgentSource);
+        if (agentSelect) {
+            agentSelect.required = isAgentSource;
+            agentSelect.disabled = !isAgentSource;
+            if (!isAgentSource) {
+                agentSelect.value = '';
+            }
+        }
+    }
+    if (counselorWrap && counselorSelect && source) {
+        const isAgentSource = source.value === 'Agents';
+        counselorWrap.classList.toggle('d-none', isAgentSource);
+        counselorSelect.required = !isAgentSource;
+        counselorSelect.disabled = isAgentSource;
+        if (isAgentSource) {
+            counselorSelect.value = '';
+        }
     }
 }
 function toggleEnglish() {

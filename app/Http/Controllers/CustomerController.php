@@ -32,6 +32,15 @@ class CustomerController extends Controller
         if (($validated['source'] ?? null) === 'Telecaller' && empty($validated['telecaller_id'])) {
             return response()->json(['message' => 'telecaller_id is required when source is Telecaller'], 422);
         }
+        if (($validated['source'] ?? null) === 'Agents' && empty($validated['agent_id'])) {
+            return response()->json(['message' => 'agent_id is required when source is Agents'], 422);
+        }
+        if (($validated['source'] ?? null) === 'Agents') {
+            $validated['assigned_counselor_id'] = null;
+            $validated['telecaller_id'] = null;
+        } else {
+            $validated['agent_id'] = null;
+        }
 
         $customer = DB::transaction(function () use ($validated, $request) {
             $validated['pid'] = PidGenerator::next();

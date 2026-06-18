@@ -25,6 +25,9 @@ class StoreCustomerRequest extends FormRequest
     public function rules()
     {
         $isAgent = optional($this->user())->role === 'agent';
+        $counselorRule = $isAgent || $this->input('source') === 'Agents'
+            ? 'nullable'
+            : 'required';
         $leadId = $this->input('lead_id');
         $phoneRule = Rule::unique('customers', 'phone');
         if ($leadId && $this->routeIs('customers.store')) {
@@ -66,7 +69,7 @@ class StoreCustomerRequest extends FormRequest
             'previous_refusal' => 'nullable|in:yes,no',
             'refusal_countries' => 'nullable|array',
             'refusal_countries.*' => 'string|max:255',
-            'assigned_counselor_id' => [$isAgent ? 'nullable' : 'required', 'exists:users,id'],
+            'assigned_counselor_id' => [$counselorRule, 'exists:users,id'],
             'status' => ['nullable', Rule::in(config('crm.customer_statuses', []))],
         ];
     }

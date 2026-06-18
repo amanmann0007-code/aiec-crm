@@ -135,11 +135,10 @@ class WebCustomerController extends Controller
         }
 
         $counselors = User::where('role', 'counselor')->where('status', 'active')->get();
-        $telecallers = User::where('role', 'telecaller')->where('status', 'active')->get();
         $agents = User::where('role', 'agent')->where('status', 'active')->orderBy('name')->get();
         $qualifications = Qualification::active()->orderBy('name')->pluck('name');
 
-        return view('customers.create', compact('counselors', 'telecallers', 'agents', 'qualifications', 'prefillLead', 'prefillEntry'));
+        return view('customers.create', compact('counselors', 'agents', 'qualifications', 'prefillLead', 'prefillEntry'));
     }
 
     public function createTelecaller()
@@ -180,8 +179,8 @@ class WebCustomerController extends Controller
         if (($validated['source'] ?? '') === 'Reference' && empty($validated['reference_name'])) {
             return back()->withErrors(['reference_name' => 'Reference name is required.'])->withInput();
         }
-        if (($validated['source'] ?? '') === 'Telecaller' && empty($validated['telecaller_id'])) {
-            return back()->withErrors(['telecaller_id' => 'Select a telecaller.'])->withInput();
+        if (($validated['source'] ?? '') === 'Telecaller' && empty($validated['lead_id'])) {
+            return back()->withErrors(['source' => 'Telecaller source is only available from visiting clients.'])->withInput();
         }
         if (Auth::user()->role === 'agent') {
             $validated['source'] = 'Agents';
@@ -191,7 +190,10 @@ class WebCustomerController extends Controller
             $validated['telecaller_id'] = null;
         } elseif (($validated['source'] ?? '') === 'Agents' && empty($validated['agent_id'])) {
             return back()->withErrors(['agent_id' => 'Select an agent.'])->withInput();
-        } elseif (($validated['source'] ?? '') !== 'Agents') {
+        } elseif (($validated['source'] ?? '') === 'Agents') {
+            $validated['assigned_counselor_id'] = null;
+            $validated['telecaller_id'] = null;
+        } else {
             $validated['agent_id'] = null;
         }
 
