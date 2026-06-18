@@ -16,11 +16,14 @@ class UserAdminController extends Controller
 
     public function index()
     {
-        $users = User::orderBy('name')->paginate(20);
+        $users = User::query()
+            ->when($this->isDirector(), fn ($query) => $query->where('role', '!=', 'admin'))
+            ->orderBy('name')
+            ->paginate(20);
 
         return view('users.index', [
             'users' => $users,
-            'roles' => $this->roles,
+            'roles' => $this->manageableRoles(),
             'statuses' => $this->statuses,
         ]);
     }
@@ -28,6 +31,7 @@ class UserAdminController extends Controller
     public function store(Request $request)
     {
         $isAgent = $request->input('role') === 'agent';
+        $roles = $this->manageableRoles();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -35,7 +39,7 @@ class UserAdminController extends Controller
             'agent_contact' => [$isAgent ? 'required' : 'nullable', 'string', 'max:50'],
             'agent_branch' => [$isAgent ? 'required' : 'nullable', 'string', 'max:120'],
             'agent_reference_from' => [$isAgent ? 'required' : 'nullable', 'string', 'max:255'],
-            'role' => ['required', Rule::in($this->roles)],
+            'role' => ['required', Rule::in($roles)],
             'status' => ['required', Rule::in($this->statuses)],
             'password' => [$isAgent ? 'nullable' : 'required', 'string', 'min:8', 'confirmed'],
         ]);
@@ -63,16 +67,21 @@ class UserAdminController extends Controller
 
     public function edit(User $user)
     {
+        $this->ensureDirectorCanManage($user);
+
         return view('users.edit', [
             'managedUser' => $user,
-            'roles' => $this->roles,
+            'roles' => $this->manageableRoles(),
             'statuses' => $this->statuses,
         ]);
     }
 
     public function update(Request $request, User $user)
     {
+        $this->ensureDirectorCanManage($user);
+
         $isAgent = $request->input('role') === 'agent';
+        $roles = $this->manageableRoles();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -80,7 +89,7 @@ class UserAdminController extends Controller
             'agent_contact' => [$isAgent ? 'required' : 'nullable', 'string', 'max:50'],
             'agent_branch' => [$isAgent ? 'required' : 'nullable', 'string', 'max:120'],
             'agent_reference_from' => [$isAgent ? 'required' : 'nullable', 'string', 'max:255'],
-            'role' => ['required', Rule::in($this->roles)],
+            'role' => ['required', Rule::in($roles)],
             'status' => ['required', Rule::in($this->statuses)],
         ]);
 
@@ -106,6 +115,8 @@ class UserAdminController extends Controller
 
     public function updatePassword(Request $request, User $user)
     {
+        $this->ensureDirectorCanManage($user);
+
         $validated = $request->validate([
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
@@ -117,6 +128,27 @@ class UserAdminController extends Controller
         ActivityLogger::log(Auth::id(), 'RESET_USER_PASSWORD', 'Reset password for user ' . $user->name);
 
         return redirect()->route('users.edit', $user)->with('success', 'Password reset successfully.');
+    }
+
+    private function manageableRoles(): array
+    {
+        if ($this->isDirector()) {
+            return array_values(array_filter($this->roles, fn ($role) => $role !== 'admin'));
+        }
+
+        return $this->roles;
+    }
+
+    private function ensureDirectorCanManage(User $user): void
+    {
+        if ($this->isDirector() && $user->role === 'admin') {
+            abort(403, 'Directors cannot manage admin accounts.');
+        }
+    }
+
+    private function isDirector(): bool
+    {
+        return Auth::user() && Auth::user()->role === 'director';
     }
 
     private function formatChanges(array $before, array $after): array
