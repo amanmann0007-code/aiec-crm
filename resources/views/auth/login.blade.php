@@ -7,10 +7,7 @@
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="text-center mb-4">
-                <a href="{{ url('/') }}">
-                    <img src="{{ asset(config('company.logo_path', 'images/aiec-logo.png')) }}" alt="{{ config('company.name', 'AIEC Institute') }}" class="login-brand__logo">
-                </a>
-                <p class="text-muted mt-3 mb-0">{{ config('company.tagline', 'Customer Relationship Management') }}</p>
+                <p class="text-muted mb-0">{{ config('company.tagline', 'Customer Relationship Management') }}</p>
             </div>
             <div class="card shadow">
                 <div class="card-body p-4">
