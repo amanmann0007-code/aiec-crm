@@ -10,7 +10,7 @@ class UpdateCustomerRequest extends FormRequest
 {
     public function authorize()
     {
-        return $this->user() && in_array($this->user()->role, ['admin', 'counselor'], true);
+        return $this->user() && in_array($this->user()->role, ['admin', 'counselor', 'director'], true);
     }
 
     protected function prepareForValidation()

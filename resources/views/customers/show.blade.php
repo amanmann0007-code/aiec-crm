@@ -74,7 +74,7 @@
         <div class="card shadow-sm">
             <div class="card-header">Customer Info</div>
             <div class="card-body small">
-                @if(in_array(auth()->user()->role, ['admin', 'counselor'], true))
+                @if(in_array(auth()->user()->role, ['admin', 'counselor', 'director'], true))
                     <div class="mb-2">
                         <a href="{{ route('customers.edit', $customer) }}" class="btn btn-sm btn-outline-primary">Edit Customer</a>
                     </div>

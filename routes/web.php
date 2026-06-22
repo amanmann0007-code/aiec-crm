@@ -69,10 +69,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,receptionist,director,agent');
     Route::get('/customers/{customer}/edit', [WebCustomerController::class, 'edit'])
         ->name('customers.edit')
-        ->middleware('role:admin,counselor');
+        ->middleware('role:admin,counselor,director');
     Route::put('/customers/{customer}', [WebCustomerController::class, 'update'])
         ->name('customers.update')
-        ->middleware('role:admin,counselor');
+        ->middleware('role:admin,counselor,director');
     Route::post('/customers/{customer}/process-steps/{stepKey}', [CustomerProcessStepController::class, 'complete'])
         ->name('customers.process-steps.complete')
         ->middleware('role:admin,counselor,director,agent');
