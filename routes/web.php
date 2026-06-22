@@ -93,9 +93,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/customers/{customer}/intake', [WebCustomerController::class, 'updateIntake'])
         ->name('customers.intake.update')
         ->middleware('role:admin,counselor,director,agent');
+    Route::post('/customers/{customer}/filing-by', [WebCustomerController::class, 'updateFilingBy'])
+        ->name('customers.filing-by.update');
     Route::post('/customers/{customer}/agent-commercial', [WebCustomerController::class, 'updateAgentCommercial'])
         ->name('customers.agent-commercial.update')
-        ->middleware('role:admin');
+        ->middleware('role:admin,director');
     Route::post('/customers/{customer}/documents', [WebDocumentController::class, 'store'])->name('customers.documents.store');
     Route::delete('/documents/{document}', [WebDocumentController::class, 'destroy'])->name('documents.destroy');
 

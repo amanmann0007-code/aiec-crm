@@ -396,7 +396,7 @@ class WebCustomerController extends Controller
 
     public function updateAgentCommercial(Request $request, Customer $customer)
     {
-        if (Auth::user()->role !== 'admin') {
+        if (!in_array(Auth::user()->role, ['admin', 'director'], true)) {
             abort(403);
         }
 
@@ -427,6 +427,28 @@ class WebCustomerController extends Controller
         );
 
         return redirect()->route('customers.show', $customer)->with('success', 'Agent commercial details updated.');
+    }
+
+    public function updateFilingBy(Request $request, Customer $customer)
+    {
+        $this->authorizeCustomer($customer);
+
+        $validated = $request->validate([
+            'filing_by' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $customer->update([
+            'filing_by' => trim((string) ($validated['filing_by'] ?? '')) ?: null,
+        ]);
+
+        ActivityLogger::log(
+            Auth::id(),
+            'UPDATE_FILING_BY',
+            'Updated filing by for ' . $customer->activitySummary(),
+            $customer->id
+        );
+
+        return redirect()->route('customers.show', $customer)->with('success', 'Filing by updated.');
     }
 
     public function storeSpecialRemark(Request $request, Customer $customer)
@@ -512,9 +534,9 @@ class WebCustomerController extends Controller
         $canAddSpecialRemark = Auth::user()->role === 'counselor'
             && $customer->assigned_counselor_id === Auth::id()
             && trim((string) $customer->special_remark) === '';
-        $canViewAgentCommercial = Auth::user()->role === 'admin'
+        $canViewAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'agent' && $customer->agent_id === Auth::id());
-        $canManageAgentCommercial = Auth::user()->role === 'admin';
+        $canManageAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true);
 
         return view('customers.show', compact(
             'customer',

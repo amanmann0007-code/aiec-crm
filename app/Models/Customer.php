@@ -52,6 +52,7 @@ class Customer extends Model
         'actual_cost',
         'b2b_cost',
         'margin',
+        'filing_by',
         'created_by',
     ];
 

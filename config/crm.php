@@ -13,6 +13,7 @@ return [
         'Spoken English',
         'TOEFL',
         'Life Skills',
+        'Language Certificate',
         'PTE',
         'Closed Work Permit(LMIA)',
         'Super Visa',
@@ -153,6 +154,7 @@ return [
         'japan' => 'Japan',
         'Mauritius' => 'Mauritius',
         'moldova' => 'Moldova',
+        'bulgaria' => 'Bulgaria',
     ],
 
     'country_iso' => [
@@ -171,5 +173,6 @@ return [
         'japan' => 'jp',
         'Mauritius' => 'mu',
         'moldova' => 'md',
+        'bulgaria' => 'bg',
     ],
 ];

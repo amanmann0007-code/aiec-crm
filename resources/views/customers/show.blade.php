@@ -364,6 +364,24 @@
         </div>
 
         <div class="card shadow-sm mb-3">
+            <div class="card-header">Filing by</div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('customers.filing-by.update', $customer) }}">
+                    @csrf
+                    <div class="mb-2">
+                        <textarea name="filing_by"
+                                  class="form-control @error('filing_by') is-invalid @enderror"
+                                  rows="3"
+                                  maxlength="5000"
+                                  placeholder="Enter filing by details...">{{ old('filing_by', $customer->filing_by) }}</textarea>
+                        @error('filing_by')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Save Filing by</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
             <div class="card-header">Fees</div>
             <div class="card-body">
                 @if($canAddFees)

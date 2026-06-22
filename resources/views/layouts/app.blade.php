@@ -201,7 +201,6 @@
 <body>
 @auth
 <header class="app-topbar">
-    @include('partials.brand-logo')
     <button type="button" class="btn btn-light border sidebar-toggle-btn" id="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="true">
         <i class="bi bi-list"></i>
     </button>
