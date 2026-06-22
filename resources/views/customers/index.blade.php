@@ -21,6 +21,21 @@
 
         return $currentDirection === 'asc' ? 'bi-sort-up' : 'bi-sort-down';
     };
+    $statusBadgeClass = function ($status) {
+        $status = strtolower(trim((string) $status));
+        $classes = [
+            'assigned' => 'bg-primary',
+            'interested' => 'bg-success',
+            'pursuing ielts/pte' => 'bg-info text-dark',
+            'in process' => 'bg-warning text-dark',
+            'not eligible' => 'bg-danger',
+            'plan drop' => 'bg-dark',
+            'will visit' => 'status-badge-will-visit',
+            'jfi' => 'status-badge-jfi',
+        ];
+
+        return $classes[$status] ?? 'bg-secondary';
+    };
 @endphp
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     @if(($showStatusFilter ?? true) || ($showProcessFilter ?? true))
@@ -49,7 +64,7 @@
         @endif
     </form>
     @else
-        <div class="text-muted small">Showing cases with status <span class="badge bg-secondary">assigned</span></div>
+        <div class="text-muted small">Showing cases with status <span class="badge {{ $statusBadgeClass('assigned') }}">assigned</span></div>
     @endif
     @if(in_array(auth()->user()->role, ['admin','receptionist','director','agent']))
         <a href="{{ route('customers.create') }}" class="btn btn-primary">+ Add Customer</a>
@@ -112,7 +127,7 @@
                             <span class="badge bg-light text-muted border process-status-tag">Not started</span>
                         @endif
                     </td>
-                    <td><span class="badge bg-secondary">{{ $c->status }}</span></td>
+                    <td><span class="badge {{ $statusBadgeClass($c->status) }}">{{ $c->status }}</span></td>
                     <td>
                         @if($nextFollowUpDate)
                             <span class="badge {{ $followUpBadgeClass }}">{{ $nextFollowUpDate->format('d M Y') }}</span>
@@ -172,6 +187,14 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         vertical-align: middle;
+    }
+    .status-badge-will-visit {
+        background: #7c3aed;
+        color: #fff;
+    }
+    .status-badge-jfi {
+        background: #64748b;
+        color: #fff;
     }
     .customer-row-struck td:not(:last-child) {
         text-decoration: line-through;
