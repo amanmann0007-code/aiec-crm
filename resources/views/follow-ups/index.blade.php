@@ -9,6 +9,21 @@
         'today' => ['title' => 'Today', 'class' => 'warning', 'items' => $todayList],
         'upcoming' => ['title' => 'Upcoming', 'class' => 'success', 'items' => $upcoming],
     ];
+    $statusBadgeClass = function ($status) {
+        $status = strtolower(trim((string) $status));
+        $classes = [
+            'assigned' => 'bg-primary',
+            'interested' => 'bg-success',
+            'pursuing ielts/pte' => 'bg-info text-dark',
+            'in process' => 'bg-warning text-dark',
+            'not eligible' => 'bg-danger',
+            'plan drop' => 'bg-dark',
+            'will visit' => 'status-badge-will-visit',
+            'jfi' => 'status-badge-jfi',
+        ];
+
+        return $classes[$status] ?? 'bg-secondary';
+    };
 @endphp
 
 @foreach($sections as $key => $section)
@@ -41,7 +56,7 @@
                             <span class="badge bg-light text-muted border process-status-tag">Not started</span>
                         @endif
                     </td>
-                    <td><span class="badge bg-secondary">{{ $c->status }}</span></td>
+                    <td><span class="badge {{ $statusBadgeClass($c->status) }}">{{ $c->status }}</span></td>
                     <td>{{ $followDate }}</td>
                     <td class="small text-muted">{{ Str::limit($row['last_remark'] ?? '--', 60) }}</td>
                     <td class="text-nowrap">
@@ -66,6 +81,14 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         vertical-align: middle;
+    }
+    .status-badge-will-visit {
+        background: #7c3aed;
+        color: #fff;
+    }
+    .status-badge-jfi {
+        background: #64748b;
+        color: #fff;
     }
 </style>
 @endpush

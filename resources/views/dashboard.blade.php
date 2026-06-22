@@ -6,6 +6,21 @@
 @php
     $dashboardFilterParams = ($isSuperAdmin ?? false) && !empty($selectedUserId) ? ['user_id' => $selectedUserId] : [];
     $showLeadSourceReport = ($user->role ?? null) !== 'agent';
+    $statusBadgeClass = function ($status) {
+        $status = strtolower(trim((string) $status));
+        $classes = [
+            'assigned' => 'bg-primary',
+            'interested' => 'bg-success',
+            'pursuing ielts/pte' => 'bg-info text-dark',
+            'in process' => 'bg-warning text-dark',
+            'not eligible' => 'bg-danger',
+            'plan drop' => 'bg-dark',
+            'will visit' => 'status-badge-will-visit',
+            'jfi' => 'status-badge-jfi',
+        ];
+
+        return $classes[$status] ?? 'bg-secondary';
+    };
 @endphp
 <form method="GET" class="card shadow-sm mb-3">
     <div class="card-body d-flex flex-wrap align-items-end gap-3">
@@ -354,7 +369,7 @@
                         @endif
                     </td>
                     <td>
-                        <a href="{{ route('customers.index', ['status' => $c->status]) }}" class="badge bg-secondary text-decoration-none">
+                        <a href="{{ route('customers.index', ['status' => $c->status]) }}" class="badge {{ $statusBadgeClass($c->status) }} text-decoration-none">
                             {{ $c->status }}
                         </a>
                     </td>
@@ -406,6 +421,14 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         vertical-align: middle;
+    }
+    .status-badge-will-visit {
+        background: #7c3aed;
+        color: #fff;
+    }
+    .status-badge-jfi {
+        background: #64748b;
+        color: #fff;
     }
     .customer-row-struck td:not(:last-child) {
         text-decoration: line-through;
