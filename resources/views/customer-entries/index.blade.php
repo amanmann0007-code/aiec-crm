@@ -21,7 +21,7 @@
             @forelse($entries as $entry)
                 <tr>
                     <td>{{ $entry->name }}</td>
-                    <td>{{ $entry->phone }}</td>
+                    <td><span class="phone-highlight">{{ $entry->phone }}</span></td>
                     <td>@include('partials.country-flag', ['code' => $entry->country])</td>
                     <td>{{ $entry->visa_type }}</td>
                     <td>{{ $entry->qualification ?? '--' }}</td>

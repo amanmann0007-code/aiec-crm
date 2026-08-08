@@ -33,6 +33,14 @@
             font-size: .9rem;
             color: #475569;
         }
+        .phone-highlight {
+            display: inline-block;
+            padding: .12rem .38rem;
+            border-radius: .3rem;
+            background: #111827;
+            color: #fff;
+            font-weight: 700;
+        }
         .amount-negative {
             color: #dc3545;
         }
@@ -88,7 +96,7 @@
             <div class="text-muted small">Customer</div>
             <div class="fw-semibold">{{ $customer->name }}</div>
             <div class="receipt-meta">PID: {{ $customer->pid }}</div>
-            <div class="receipt-meta">Phone: {{ $customer->phone }}</div>
+            <div class="receipt-meta">Phone: <span class="phone-highlight">{{ $customer->phone }}</span></div>
         </div>
         <div class="col-md-6">
             <div class="text-muted small">Case Details</div>

@@ -10,7 +10,19 @@ class UpdateCustomerRequest extends FormRequest
 {
     public function authorize()
     {
-        return $this->user() && in_array($this->user()->role, ['admin', 'counselor', 'director'], true);
+        if (!$this->user()) {
+            return false;
+        }
+
+        if (in_array($this->user()->role, ['admin', 'counselor', 'director'], true)) {
+            return true;
+        }
+
+        $customer = $this->route('customer');
+
+        return $this->user()->role === 'agent'
+            && $customer
+            && (int) $customer->agent_id === (int) $this->user()->id;
     }
 
     protected function prepareForValidation()
@@ -26,6 +38,9 @@ class UpdateCustomerRequest extends FormRequest
     {
         $customer = $this->route('customer');
         $customerId = $customer ? $customer->id : null;
+        $isAgentSource = optional($this->user())->role === 'agent' || $this->input('source') === 'Agents';
+        $assigneeRule = $isAgentSource ? 'nullable' : 'required_without:telecaller_id';
+        $telecallerRule = $isAgentSource ? 'nullable' : 'required_without:assigned_counselor_id';
 
         return [
             'name' => 'required|string|max:255',
@@ -44,7 +59,10 @@ class UpdateCustomerRequest extends FormRequest
             'country' => ['required', Rule::in(array_keys(config('crm.countries')))],
             'source' => 'nullable|string|max:255',
             'reference_name' => 'nullable|string|max:255',
-            'telecaller_id' => ['nullable', 'required_without:assigned_counselor_id', 'exists:users,id'],
+            'telecaller_id' => ['nullable', $telecallerRule, 'exists:users,id'],
+            'agent_id' => ['nullable', Rule::exists('users', 'id')->where(function ($query) {
+                $query->where('role', 'agent')->where('status', 'active');
+            })],
             'english_test' => 'nullable|in:yes,no',
             'english_subject_score' => ['nullable', 'required_if:english_test,no', 'string', 'max:50'],
             'test_type' => 'nullable|string|max:255',
@@ -57,7 +75,7 @@ class UpdateCustomerRequest extends FormRequest
             'previous_refusal' => 'nullable|in:yes,no',
             'refusal_countries' => 'nullable|array',
             'refusal_countries.*' => 'string|max:255',
-            'assigned_counselor_id' => ['nullable', 'required_without:telecaller_id', 'exists:users,id'],
+            'assigned_counselor_id' => ['nullable', $assigneeRule, 'exists:users,id'],
             'status' => ['required', Rule::in(config('crm.customer_statuses', []))],
         ];
     }
@@ -69,6 +87,7 @@ class UpdateCustomerRequest extends FormRequest
             'assigned_counselor_id.required_without' => 'Assign either a counselor or a telecaller.',
             'telecaller_id.required_without' => 'Assign either a counselor or a telecaller.',
             'english_subject_score.required_if' => 'Enter the English subject score when English Test is No.',
+            'agent_id.exists' => 'Select a valid active agent.',
         ];
     }
 

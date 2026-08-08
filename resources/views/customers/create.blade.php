@@ -63,7 +63,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Phone *</label>
-                        <input name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ $phoneDefault }}" required>
+                        <input name="phone" class="form-control phone-input-highlight @error('phone') is-invalid @enderror" value="{{ $phoneDefault }}" required>
                         @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

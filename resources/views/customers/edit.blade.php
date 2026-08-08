@@ -9,6 +9,9 @@
             @csrf
             @method('PUT')
             @php
+                $isAgentUser = auth()->user()->role === 'agent';
+                $sourceDefault = old('source', $isAgentUser ? 'Agents' : $customer->source);
+                $agentDefault = old('agent_id', $isAgentUser ? auth()->id() : $customer->agent_id);
                 $residenceDefault = old('residence_country', $customer->residence_country ?: 'india');
                 $refusalDefault = old('refusal_countries');
                 $refusalText = is_array($refusalDefault) ? implode(', ', $refusalDefault) : implode(', ', $existingRefusalCountries);
@@ -27,7 +30,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Phone *</label>
-                        <input name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $customer->phone) }}" required>
+                        <input name="phone" class="form-control phone-input-highlight @error('phone') is-invalid @enderror" value="{{ old('phone', $customer->phone) }}" required>
                         @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3">
@@ -174,37 +177,64 @@
             <div class="border rounded-3 p-3 mb-3">
                 <h6 class="mb-3 text-primary">Source & Assignment</h6>
                 <div class="row g-3">
+                    @if($isAgentUser)
+                        <input type="hidden" name="source" value="Agents">
+                        <input type="hidden" name="agent_id" value="{{ auth()->id() }}">
+                        <div class="col-md-4">
+                            <label class="form-label">Source</label>
+                            <input class="form-control" value="Agents" disabled>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Agent</label>
+                            <input class="form-control" value="{{ auth()->user()->name }}" disabled>
+                        </div>
+                    @else
                     <div class="col-md-4">
                         <label class="form-label">Source</label>
                         <select name="source" id="source" class="form-select">
                             <option value="">—</option>
-                            @foreach(['Walk-in','Reference','Telecaller','Online','Other'] as $s)
-                                <option value="{{ $s }}" {{ old('source', $customer->source) == $s ? 'selected' : '' }}>{{ $s }}</option>
+                            @foreach(['Walk-in','Reference','Telecaller','Agents','Online','Other'] as $s)
+                                <option value="{{ $s }}" {{ $sourceDefault == $s ? 'selected' : '' }}>{{ $s }}</option>
                             @endforeach
                         </select>
                     </div>
+                    @endif
                     <div class="col-md-4 d-none" id="reference-wrap">
                         <label class="form-label">Reference Name</label>
                         <input name="reference_name" class="form-control" value="{{ old('reference_name', $customer->reference_name) }}">
                     </div>
+                    @unless($isAgentUser)
+                    <div class="col-md-4 d-none" id="agent-wrap">
+                        <label class="form-label">Agent</label>
+                        <select name="agent_id" id="agent_id" class="form-select @error('agent_id') is-invalid @enderror">
+                            <option value="">--</option>
+                            @foreach($agents as $agent)
+                                <option value="{{ $agent->id }}" {{ (string) $agentDefault === (string) $agent->id ? 'selected' : '' }}>
+                                    {{ $agent->name }}{{ $agent->agent_branch ? ' - ' . $agent->agent_branch : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('agent_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
                     <div class="col-md-4" id="telecaller-wrap">
                         <label class="form-label">Telecaller <span class="text-muted small">(required if no counselor)</span></label>
-                        <select name="telecaller_id" class="form-select">
+                        <select name="telecaller_id" id="telecaller_id" class="form-select">
                             <option value="">—</option>
                             @foreach($telecallers as $t)
                                 <option value="{{ $t->id }}" {{ old('telecaller_id', $customer->telecaller_id) == $t->id ? 'selected' : '' }}>{{ $t->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4" id="counselor-wrap">
                         <label class="form-label">Assign Counselor <span class="text-muted small">(required if no telecaller)</span></label>
-                        <select name="assigned_counselor_id" class="form-select">
+                        <select name="assigned_counselor_id" id="assigned_counselor_id" class="form-select">
                             <option value="">—</option>
                             @foreach($counselors as $c)
                                 <option value="{{ $c->id }}" {{ old('assigned_counselor_id', $customer->assigned_counselor_id) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                             @endforeach
                         </select>
                     </div>
+                    @endunless
                 </div>
             </div>
 
@@ -238,6 +268,12 @@
 <script>
 const source = document.getElementById('source');
 const refWrap = document.getElementById('reference-wrap');
+const agentWrap = document.getElementById('agent-wrap');
+const agentSelect = document.getElementById('agent_id');
+const telecallerWrap = document.getElementById('telecaller-wrap');
+const telecallerSelect = document.getElementById('telecaller_id');
+const counselorWrap = document.getElementById('counselor-wrap');
+const counselorSelect = document.getElementById('assigned_counselor_id');
 const engTest = document.getElementById('english_test');
 const engWrap = document.getElementById('english-wrap');
 const engSubjectWrap = document.getElementById('english-subject-score-wrap');
@@ -247,7 +283,31 @@ const refusWrap = document.getElementById('refusal-wrap');
 const form = document.getElementById('customer-form');
 
 function toggleSource() {
-    refWrap.classList.toggle('d-none', source.value !== 'Reference');
+    if (!source) return;
+
+    const isReference = source.value === 'Reference';
+    const isAgentSource = source.value === 'Agents';
+
+    refWrap?.classList.toggle('d-none', !isReference);
+    agentWrap?.classList.toggle('d-none', !isAgentSource);
+    telecallerWrap?.classList.toggle('d-none', isAgentSource);
+    counselorWrap?.classList.toggle('d-none', isAgentSource);
+
+    if (agentSelect) {
+        agentSelect.required = isAgentSource;
+        agentSelect.disabled = !isAgentSource;
+        if (!isAgentSource) {
+            agentSelect.value = '';
+        }
+    }
+
+    [telecallerSelect, counselorSelect].forEach((select) => {
+        if (!select) return;
+        select.disabled = isAgentSource;
+        if (isAgentSource) {
+            select.value = '';
+        }
+    });
 }
 function toggleEnglish() {
     const hasEnglishTest = engTest.value === 'yes';
@@ -262,7 +322,7 @@ function toggleEnglish() {
 }
 function toggleRefusal() { refusWrap.classList.toggle('d-none', prevRef.value !== 'yes'); }
 
-source.addEventListener('change', toggleSource);
+source?.addEventListener('change', toggleSource);
 engTest.addEventListener('change', toggleEnglish);
 prevRef.addEventListener('change', toggleRefusal);
 toggleSource(); toggleEnglish(); toggleRefusal();

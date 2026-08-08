@@ -26,7 +26,7 @@
                 <tr>
                     <td><a href="{{ route('customers.show', $customer) }}">{{ $customer->pid }}</a></td>
                     <td>{{ $customer->name }}</td>
-                    <td>{{ $customer->phone }}</td>
+                    <td><span class="phone-highlight">{{ $customer->phone }}</span></td>
                     <td>@include('partials.country-flag', ['code' => $customer->country])</td>
                     <td>{{ $customer->visa_type }}</td>
                     <td><span class="badge bg-warning text-dark">{{ $customer->status }}</span></td>

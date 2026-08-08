@@ -69,10 +69,10 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,receptionist,director,agent');
     Route::get('/customers/{customer}/edit', [WebCustomerController::class, 'edit'])
         ->name('customers.edit')
-        ->middleware('role:admin,counselor,director');
+        ->middleware('role:admin,counselor,director,agent');
     Route::put('/customers/{customer}', [WebCustomerController::class, 'update'])
         ->name('customers.update')
-        ->middleware('role:admin,counselor,director');
+        ->middleware('role:admin,counselor,director,agent');
     Route::post('/customers/{customer}/process-steps/{stepKey}', [CustomerProcessStepController::class, 'complete'])
         ->name('customers.process-steps.complete')
         ->middleware('role:admin,counselor,director,agent');
@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
         ->name('customers.agent-commercial.update')
         ->middleware('role:admin,director');
     Route::post('/customers/{customer}/documents', [WebDocumentController::class, 'store'])->name('customers.documents.store');
+    Route::get('/documents/{document}', [WebDocumentController::class, 'show'])->name('documents.show');
     Route::delete('/documents/{document}', [WebDocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::get('/follow-ups', [WebFollowUpController::class, 'index'])->name('follow-ups.index');

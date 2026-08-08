@@ -194,6 +194,28 @@
         .notification-item:hover { background: #f8f9fa; }
         .notification-item.unread { background: #e7f1ff; }
         #notif-badge { font-size: 10px; min-width: 18px; }
+        .phone-highlight,
+        .phone-input-highlight {
+            display: inline-block;
+            padding: .16rem .45rem;
+            border-radius: .35rem;
+            background: #111827;
+            color: #fff !important;
+            font-weight: 700;
+            letter-spacing: .01em;
+        }
+        .phone-input-highlight {
+            display: block;
+            width: 100%;
+            background-color: #111827 !important;
+            border-color: #111827 !important;
+        }
+        .phone-input-highlight:focus {
+            background-color: #111827 !important;
+            color: #fff !important;
+            border-color: var(--aiec-blue) !important;
+            box-shadow: 0 0 0 .2rem rgba(26,77,143,.18);
+        }
         .login-brand__logo { max-width: 280px; width: 100%; height: auto; }
     </style>
     @stack('styles')
@@ -364,7 +386,7 @@
                                 @if($followUp->customer)
                                     <a href="{{ route('customers.show', $followUp->customer) }}" class="list-group-item list-group-item-action">
                                         <div class="fw-semibold">{{ $followUp->customer->name }} <span class="text-muted">({{ $followUp->customer->pid }})</span></div>
-                                        <div class="small text-muted">{{ $followUp->customer->phone }} · {{ $followUp->customer->visa_type ?? '--' }}</div>
+                                        <div class="small text-muted"><span class="phone-highlight">{{ $followUp->customer->phone }}</span> · {{ $followUp->customer->visa_type ?? '--' }}</div>
                                     </a>
                                 @endif
                             @endforeach
@@ -379,7 +401,7 @@
                             @foreach($visitPopupItems as $customer)
                                 <a href="{{ route('customers.show', $customer) }}" class="list-group-item list-group-item-action">
                                     <div class="fw-semibold">{{ $customer->name }} <span class="text-muted">({{ $customer->pid }})</span></div>
-                                    <div class="small text-muted">{{ $customer->phone }} · {{ $customer->visa_type ?? '--' }} · {{ optional($customer->telecaller)->name ?? '--' }}</div>
+                                    <div class="small text-muted"><span class="phone-highlight">{{ $customer->phone }}</span> · {{ $customer->visa_type ?? '--' }} · {{ optional($customer->telecaller)->name ?? '--' }}</div>
                                 </a>
                             @endforeach
                         </div>
@@ -473,8 +495,8 @@
             title.appendChild(name);
 
             const phone = document.createElement('span');
-            phone.className = 'text-muted fw-normal';
-            phone.textContent = `- ${text(c.phone, 'No phone')}`;
+            phone.className = 'phone-highlight';
+            phone.textContent = text(c.phone, 'No phone');
             title.appendChild(phone);
 
             const meta = document.createElement('div');
@@ -542,8 +564,8 @@
                             const name = document.createElement('span');
                             name.textContent = `- ${text(c.name, 'Unnamed')}`;
                             const phone = document.createElement('span');
-                            phone.className = 'text-muted fw-normal';
-                            phone.textContent = `- ${text(c.phone, 'No phone')}`;
+                            phone.className = 'phone-highlight';
+                            phone.textContent = text(c.phone, 'No phone');
                             title.appendChild(pid);
                             title.appendChild(name);
                             title.appendChild(phone);

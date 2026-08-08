@@ -116,7 +116,7 @@
                 <tr class="{{ $shouldStrikeCustomer ? 'customer-row-struck' : '' }}">
                     <td><a href="{{ route('customers.show', $c) }}">{{ $c->pid }}</a></td>
                     <td>{{ $c->name }}</td>
-                    <td>{{ $c->phone }}</td>
+                    <td><span class="phone-highlight">{{ $c->phone }}</span></td>
                     <td>{{ $c->source ?: '--' }}</td>
                     <td>@include('partials.country-flag', ['code' => $c->country])</td>
                     <td>{{ $c->visa_type }}</td>

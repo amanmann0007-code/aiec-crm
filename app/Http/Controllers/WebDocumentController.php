@@ -13,6 +13,8 @@ class WebDocumentController extends Controller
 {
     public function store(Request $request, Customer $customer)
     {
+        $this->authorizeCustomerAccess($customer);
+
         $request->validate([
             'document_name' => ['required', 'string', 'max:255'],
             'documents' => 'required|array',
@@ -35,6 +37,23 @@ class WebDocumentController extends Controller
         return back()->with('success', 'Documents uploaded.');
     }
 
+    public function show(Document $document)
+    {
+        $customer = $document->customer;
+
+        if (!$customer) {
+            abort(404);
+        }
+
+        $this->authorizeCustomerAccess($customer);
+
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            abort(404, 'Document file not found.');
+        }
+
+        return Storage::disk('public')->response($document->file_path, $document->document_name);
+    }
+
     public function destroy(Document $document)
     {
         if (Auth::user()->role !== 'admin') {
@@ -52,5 +71,32 @@ class WebDocumentController extends Controller
         $document->delete();
 
         return back()->with('success', 'Document deleted.');
+    }
+
+    private function authorizeCustomerAccess(Customer $customer): void
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        if (in_array($user->role, ['admin', 'director', 'receptionist'], true)) {
+            return;
+        }
+
+        if ($user->role === 'counselor' && $customer->assigned_counselor_id === $user->id) {
+            return;
+        }
+
+        if ($user->role === 'telecaller' && $customer->telecaller_id === $user->id) {
+            return;
+        }
+
+        if ($user->role === 'agent' && $customer->agent_id === $user->id) {
+            return;
+        }
+
+        abort(403);
     }
 }

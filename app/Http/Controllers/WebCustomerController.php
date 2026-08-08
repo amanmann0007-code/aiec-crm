@@ -321,6 +321,20 @@ class WebCustomerController extends Controller
         if (($validated['source'] ?? '') === 'Telecaller' && empty($validated['telecaller_id'])) {
             return back()->withErrors(['telecaller_id' => 'Select a telecaller.'])->withInput();
         }
+        if (Auth::user()->role === 'agent') {
+            $validated['source'] = 'Agents';
+            $validated['agent_id'] = Auth::id();
+            $validated['reference_name'] = Auth::user()->name;
+            $validated['assigned_counselor_id'] = null;
+            $validated['telecaller_id'] = null;
+        } elseif (($validated['source'] ?? '') === 'Agents' && empty($validated['agent_id'])) {
+            return back()->withErrors(['agent_id' => 'Select an agent.'])->withInput();
+        } elseif (($validated['source'] ?? '') === 'Agents') {
+            $validated['assigned_counselor_id'] = null;
+            $validated['telecaller_id'] = null;
+        } else {
+            $validated['agent_id'] = null;
+        }
 
         DB::transaction(function () use ($validated, $customer) {
             $validated['english_test'] = $validated['english_test'] ?? 'no';

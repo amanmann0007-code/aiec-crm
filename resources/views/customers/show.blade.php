@@ -74,13 +74,13 @@
         <div class="card shadow-sm">
             <div class="card-header">Customer Info</div>
             <div class="card-body small">
-                @if(in_array(auth()->user()->role, ['admin', 'counselor', 'director'], true))
+                @if(in_array(auth()->user()->role, ['admin', 'counselor', 'director'], true) || (auth()->user()->role === 'agent' && $customer->agent_id === auth()->id()))
                     <div class="mb-2">
                         <a href="{{ route('customers.edit', $customer) }}" class="btn btn-sm btn-outline-primary">Edit Customer</a>
                     </div>
                 @endif
                 <p><strong>PID:</strong> {{ $customer->pid }}</p>
-                <p><strong>Phone:</strong> {{ $customer->phone }}</p>
+                <p><strong>Phone:</strong> <span class="phone-highlight">{{ $customer->phone }}</span></p>
                 <p><strong>Email:</strong> {{ $customer->email ?? '—' }}</p>
                 <p><strong>DOB:</strong> {{ $customer->dob ?? '—' }}</p>
                 <p><strong>Gender:</strong> {{ $customer->gender ? ucfirst($customer->gender) : '—' }}</p>
@@ -244,7 +244,7 @@
                 <ul class="list-group list-group-flush mt-3">
                     @forelse($customer->documents as $doc)
                         <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <a href="{{ asset('storage/'.$doc->file_path) }}" target="_blank">{{ $doc->document_name }}</a>
+                            <a href="{{ route('documents.show', $doc) }}" target="_blank">{{ $doc->document_name }}</a>
                             @if(auth()->user()->role === 'admin')
                                 <form method="POST" action="{{ route('documents.destroy', $doc) }}" onsubmit="return confirm('Delete?')">
                                     @csrf @method('DELETE')

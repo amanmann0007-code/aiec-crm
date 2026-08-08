@@ -33,7 +33,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Phone *</label>
-                                <input name="phone" class="form-control" value="{{ old('phone') }}" required>
+                                <input name="phone" class="form-control phone-input-highlight" value="{{ old('phone') }}" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Email</label>

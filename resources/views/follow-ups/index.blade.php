@@ -47,7 +47,7 @@
                 <tr>
                     <td>{{ $c->name ?? '--' }}</td>
                     <td><a href="{{ route('customers.show', $c) }}">{{ $c->pid }}</a></td>
-                    <td>{{ $c->phone }}</td>
+                    <td><span class="phone-highlight">{{ $c->phone }}</span></td>
                     <td>{{ $c->source ?: '--' }}</td>
                     <td>
                         @if($latestProcessStep)
