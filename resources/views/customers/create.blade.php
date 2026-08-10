@@ -57,18 +57,22 @@
             <div class="border rounded-3 p-3 mb-3 bg-light-subtle">
                 <h6 class="mb-3 text-primary">Personal Details</h6>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Name *</label>
                         <input name="name" class="form-control" value="{{ $nameDefault }}" required>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <label class="form-label">Phone *</label>
                         <input name="phone" class="form-control phone-input-highlight @error('phone') is-invalid @enderror" value="{{ $phoneDefault }}" required>
                         @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                                <label class="form-label">Passport Number</label>
+                                <input name="passport" class="form-control" value="{{ old('passport') }}">
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label">Email</label>
                         <input name="email" type="email" class="form-control" value="{{ $emailDefault }}">
                     </div>

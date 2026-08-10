@@ -34,6 +34,10 @@
                         @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-3">
+                        <label class="form-label">Passport Number</label>
+                        <input name="passport" class="form-control" value="{{ old('passport', $customer->passport) }}">
+                    </div>
+                    <div class="col-md-3"></div>
                         <label class="form-label">Email</label>
                         <input name="email" type="email" class="form-control" value="{{ old('email', $customer->email) }}">
                     </div>
