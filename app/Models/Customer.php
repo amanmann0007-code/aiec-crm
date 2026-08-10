@@ -52,6 +52,8 @@ class Customer extends Model
         'actual_cost',
         'b2b_cost',
         'margin',
+        'vendor_name',
+        'vendor_quotation_path',
         'filing_by',
         'created_by',
     ];

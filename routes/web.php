@@ -97,7 +97,10 @@ Route::middleware('auth')->group(function () {
         ->name('customers.filing-by.update');
     Route::post('/customers/{customer}/agent-commercial', [WebCustomerController::class, 'updateAgentCommercial'])
         ->name('customers.agent-commercial.update')
-        ->middleware('role:admin,director');
+        ->middleware('role:admin,director,agent');
+    Route::get('/customers/{customer}/agent-commercial/quotation', [WebCustomerController::class, 'showAgentCommercialQuotation'])
+        ->name('customers.agent-commercial.quotation')
+        ->middleware('role:admin,director,agent');
     Route::post('/customers/{customer}/documents', [WebDocumentController::class, 'store'])->name('customers.documents.store');
     Route::get('/documents/{document}', [WebDocumentController::class, 'show'])->name('documents.show');
     Route::delete('/documents/{document}', [WebDocumentController::class, 'destroy'])->name('documents.destroy');

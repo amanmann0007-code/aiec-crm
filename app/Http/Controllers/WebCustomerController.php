@@ -21,6 +21,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class WebCustomerController extends Controller
 {
@@ -410,14 +411,14 @@ class WebCustomerController extends Controller
 
     public function updateAgentCommercial(Request $request, Customer $customer)
     {
-        if (!in_array(Auth::user()->role, ['admin', 'director'], true)) {
-            abort(403);
-        }
+        $this->authorizeAgentCommercialAccess($customer);
 
         $validated = $request->validate([
             'visa_duration' => ['nullable', 'string', 'max:120'],
             'actual_cost' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
             'b2b_cost' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'vendor_name' => ['nullable', 'string', 'max:255'],
+            'vendor_quotation' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:20480'],
         ]);
 
         $actualCost = $validated['actual_cost'] ?? null;
@@ -426,12 +427,24 @@ class WebCustomerController extends Controller
             ? round((float) $b2bCost - (float) $actualCost, 2)
             : null;
 
-        $customer->update([
+        $commercialData = [
             'visa_duration' => $validated['visa_duration'] ?? null,
             'actual_cost' => $actualCost,
             'b2b_cost' => $b2bCost,
             'margin' => $margin,
-        ]);
+            'vendor_name' => trim((string) ($validated['vendor_name'] ?? '')) ?: null,
+        ];
+
+        if ($request->hasFile('vendor_quotation')) {
+            if ($customer->vendor_quotation_path) {
+                Storage::disk('public')->delete($customer->vendor_quotation_path);
+            }
+
+            $commercialData['vendor_quotation_path'] = $request->file('vendor_quotation')
+                ->store("uploads/customers/{$customer->id}/commercial", 'public');
+        }
+
+        $customer->update($commercialData);
 
         ActivityLogger::log(
             Auth::id(),
@@ -441,6 +454,20 @@ class WebCustomerController extends Controller
         );
 
         return redirect()->route('customers.show', $customer)->with('success', 'Agent commercial details updated.');
+    }
+
+    public function showAgentCommercialQuotation(Customer $customer)
+    {
+        $this->authorizeAgentCommercialAccess($customer);
+
+        if (!$customer->vendor_quotation_path || !Storage::disk('public')->exists($customer->vendor_quotation_path)) {
+            abort(404, 'Vendor quotation not found.');
+        }
+
+        return Storage::disk('public')->response(
+            $customer->vendor_quotation_path,
+            basename($customer->vendor_quotation_path)
+        );
     }
 
     public function updateFilingBy(Request $request, Customer $customer)
@@ -550,7 +577,7 @@ class WebCustomerController extends Controller
             && trim((string) $customer->special_remark) === '';
         $canViewAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'agent' && $customer->agent_id === Auth::id());
-        $canManageAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true);
+        $canManageAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true) || $isAssignedAgent;
 
         return view('customers.show', compact(
             'customer',
@@ -572,6 +599,16 @@ class WebCustomerController extends Controller
     private function timelineSteps(?string $visaType): array
     {
         return ProcessTimelineService::stepsForVisaType($visaType);
+    }
+
+    private function authorizeAgentCommercialAccess(Customer $customer): void
+    {
+        $user = Auth::user();
+
+        if (!$user || (in_array($user->role, ['admin', 'director'], true) === false
+            && !($user->role === 'agent' && $customer->agent_id === $user->id))) {
+            abort(403);
+        }
     }
 
     private function visibleCustomerQuery()

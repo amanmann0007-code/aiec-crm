@@ -127,7 +127,7 @@
             <div class="card-body">
                 <p><strong>Agent:</strong> {{ optional($customer->agent)->name ?? '--' }}</p>
                 @if($canManageAgentCommercial)
-                    <form method="POST" action="{{ route('customers.agent-commercial.update', $customer) }}">
+                    <form method="POST" action="{{ route('customers.agent-commercial.update', $customer) }}" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-2">
                             <label for="visa_duration" class="form-label small">Visa duration</label>
@@ -143,7 +143,22 @@
                             <div class="col-md-6">
                                 <label for="b2b_cost" class="form-label small">B2B cost</label>
                                 <input type="number" name="b2b_cost" id="b2b_cost" class="form-control form-control-sm @error('b2b_cost') is-invalid @enderror" min="0" step="0.01" value="{{ old('b2b_cost', $customer->b2b_cost) }}">
-                                @error('b2b_cost')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('b2b_cost')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                        </div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-6">
+                                <label for="vendor_name" class="form-label small">Vendor name</label>
+                                <input type="text" name="vendor_name" id="vendor_name" class="form-control form-control-sm @error('vendor_name') is-invalid @enderror" value="{{ old('vendor_name', $customer->vendor_name) }}">
+                                @error('vendor_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label for="vendor_quotation" class="form-label small">Vendor quotation proof</label>
+                                <input type="file" name="vendor_quotation" id="vendor_quotation" class="form-control form-control-sm @error('vendor_quotation') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf">
+                                @error('vendor_quotation')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                @if($customer->vendor_quotation_path)
+                                    <a href="{{ route('customers.agent-commercial.quotation', $customer) }}" target="_blank" class="small d-inline-block mt-1">View current quotation</a>
+                                @endif
                             </div>
                         </div>
                         <div class="mt-2 small">
@@ -155,10 +170,16 @@
                 @else
                     <p><strong>Visa duration:</strong> {{ $customer->visa_duration ?? '--' }}</p>
                     <p><strong>B2B cost:</strong> {{ $customer->b2b_cost !== null ? number_format((float) $customer->b2b_cost, 2) : '--' }}</p>
-                    @if(auth()->user()->role !== 'agent')
                     <p><strong>Actual cost:</strong> {{ $customer->actual_cost !== null ? number_format((float) $customer->actual_cost, 2) : '--' }}</p>
                     <p class="mb-0"><strong>Margin:</strong> {{ $customer->margin !== null ? number_format((float) $customer->margin, 2) : '--' }}</p>
-                    @endif
+                    <p><strong>Vendor name:</strong> {{ $customer->vendor_name ?? '--' }}</p>
+                    <p class="mb-0"><strong>Vendor quotation proof:</strong>
+                        @if($customer->vendor_quotation_path)
+                            <a href="{{ route('customers.agent-commercial.quotation', $customer) }}" target="_blank">View quotation</a>
+                        @else
+                            --
+                        @endif
+                    </p>
                 @endif
             </div>
         </div>
