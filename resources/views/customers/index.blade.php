@@ -144,7 +144,7 @@
         </table>
     </div>
     @if($customers->hasPages())
-        <div class="card-footer">{{ $customers->links() }}</div>
+        <div class="card-footer customers-pagination">{{ $customers->links() }}</div>
     @endif
 </div>
 @endsection
@@ -205,6 +205,25 @@
     .customer-row-struck .badge {
         text-decoration: line-through;
         text-decoration-thickness: 1.5px;
+    }
+    .customers-pagination nav {
+        margin-bottom: 0;
+    }
+    .customers-pagination nav a[rel="prev"],
+    .customers-pagination nav a[rel="next"],
+    .customers-pagination nav span[aria-label="Previous"],
+    .customers-pagination nav span[aria-label="Next"],
+    .customers-pagination nav span[aria-label="pagination.previous"],
+    .customers-pagination nav span[aria-label="pagination.next"] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        min-width: 2rem;
+        height: 2rem;
+        padding: .15rem .35rem;
+        font-size: .9rem;
+        line-height: 1;
     }
 </style>
 @endpush
