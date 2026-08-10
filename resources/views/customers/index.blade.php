@@ -225,5 +225,12 @@
         font-size: .9rem;
         line-height: 1;
     }
+    .customers-pagination nav a[rel="prev"] svg,
+    .customers-pagination nav a[rel="next"] svg,
+    .customers-pagination nav span[aria-label="pagination.previous"] svg,
+    .customers-pagination nav span[aria-label="pagination.next"] svg {
+        width: 1rem !important;
+        height: 1rem !important;
+    }
 </style>
 @endpush
