@@ -148,7 +148,7 @@
                         </div>
                         <div class="row g-2 mt-1">
                             <div class="col-md-6">
-                                <label for="vendor_name" class="form-label small">Vendor name</label>
+                                <label for="vendor_name" class="form-label small">Agent name</label>
                                 <input type="text" name="vendor_name" id="vendor_name" class="form-control form-control-sm @error('vendor_name') is-invalid @enderror" value="{{ old('vendor_name', $customer->vendor_name) }}">
                                 @error('vendor_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
@@ -172,7 +172,7 @@
                     <p><strong>B2B cost:</strong> {{ $customer->b2b_cost !== null ? number_format((float) $customer->b2b_cost, 2) : '--' }}</p>
                     <p><strong>Actual cost:</strong> {{ $customer->actual_cost !== null ? number_format((float) $customer->actual_cost, 2) : '--' }}</p>
                     <p class="mb-0"><strong>Margin:</strong> {{ $customer->margin !== null ? number_format((float) $customer->margin, 2) : '--' }}</p>
-                    <p><strong>Vendor name:</strong> {{ $customer->vendor_name ?? '--' }}</p>
+                    <p><strong>Agent name:</strong> {{ $customer->vendor_name ?? '--' }}</p>
                     <p class="mb-0"><strong>Vendor quotation proof:</strong>
                         @if($customer->vendor_quotation_path)
                             <a href="{{ route('customers.agent-commercial.quotation', $customer) }}" target="_blank">View quotation</a>
