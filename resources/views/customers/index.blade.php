@@ -144,7 +144,34 @@
         </table>
     </div>
     @if($customers->hasPages())
-        <div class="card-footer customers-pagination">{{ $customers->links() }}</div>
+        <div class="card-footer customers-pagination {{ ($simplePagination ?? false) ? 'simple-pagination' : '' }}">
+            @if($simplePagination ?? false)
+                <nav aria-label="Customers pagination">
+                    <div class="d-flex justify-content-end gap-2">
+                        @if($customers->onFirstPage())
+                            <span class="simple-page-link disabled" aria-disabled="true" aria-label="Previous page">
+                                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                            </span>
+                        @else
+                            <a class="simple-page-link" href="{{ $customers->previousPageUrl() }}" rel="prev" aria-label="Previous page">
+                                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                            </a>
+                        @endif
+                        @if($customers->hasMorePages())
+                            <a class="simple-page-link" href="{{ $customers->nextPageUrl() }}" rel="next" aria-label="Next page">
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            </a>
+                        @else
+                            <span class="simple-page-link disabled" aria-disabled="true" aria-label="Next page">
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            </span>
+                        @endif
+                    </div>
+                </nav>
+            @else
+                {{ $customers->links() }}
+            @endif
+        </div>
     @endif
 </div>
 @endsection
@@ -231,6 +258,27 @@
     .customers-pagination nav span[aria-label="pagination.next"] svg {
         width: 1rem !important;
         height: 1rem !important;
+    }
+    .customers-pagination.simple-pagination .simple-page-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border: 1px solid #cbd5e1;
+        border-radius: .25rem;
+        background: #fff;
+        color: var(--aiec-blue);
+        text-decoration: none;
+    }
+    .customers-pagination.simple-pagination .simple-page-link:hover:not(.disabled) {
+        background: #e7f1ff;
+    }
+    .customers-pagination.simple-pagination .simple-page-link.disabled {
+        color: #94a3b8;
+        background: #f8fafc;
+        cursor: default;
     }
 </style>
 @endpush

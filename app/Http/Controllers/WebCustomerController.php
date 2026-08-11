@@ -57,6 +57,7 @@ class WebCustomerController extends Controller
             'pageTitle' => Auth::user()->role === 'telecaller'
                 ? 'My Leads'
                 : (Auth::user()->role === 'agent' ? 'My Cases' : 'Customers'),
+            'simplePagination' => Auth::user()->role === 'agent',
             'showStatusFilter' => true,
             'showProcessFilter' => false,
             'emptyMessage' => 'No customers found.',
