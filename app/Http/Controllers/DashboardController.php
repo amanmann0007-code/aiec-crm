@@ -259,10 +259,14 @@ class DashboardController extends Controller
         if ($scopeUser) {
             $query->where(function ($followUpQuery) use ($scopeUser) {
                 if ($scopeUser->role === 'agent') {
-                    $followUpQuery->where('user_id', $scopeUser->id)
-                        ->whereHas('customer', function ($customerQuery) use ($scopeUser) {
-                            $customerQuery->where('agent_id', $scopeUser->id);
-                        });
+                    $followUpQuery->whereHas('customer', function ($customerQuery) use ($scopeUser) {
+                        $customerQuery->where(function ($agentQuery) use ($scopeUser) {
+                            $agentQuery->where('agent_id', $scopeUser->id)
+                                ->orWhereHas('collaborators', function ($collaborationQuery) use ($scopeUser) {
+                                    $collaborationQuery->where('users.id', $scopeUser->id);
+                                });
+                            });
+                    });
 
                     return;
                 }
@@ -292,7 +296,12 @@ class DashboardController extends Controller
         } elseif ($scopeUser->role === 'telecaller') {
             $query->where('telecaller_id', $scopeUser->id);
         } elseif ($scopeUser->role === 'agent') {
-            $query->where('agent_id', $scopeUser->id);
+            $query->where(function ($agentQuery) use ($scopeUser) {
+                $agentQuery->where('agent_id', $scopeUser->id)
+                    ->orWhereHas('collaborators', function ($collaborationQuery) use ($scopeUser) {
+                        $collaborationQuery->where('users.id', $scopeUser->id);
+                    });
+            });
         } else {
             $query->where('created_by', $scopeUser->id);
         }

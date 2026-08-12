@@ -26,7 +26,12 @@ class SearchController extends Controller
         } elseif ($user->role === 'telecaller') {
             $query->where('telecaller_id', $user->id);
         } elseif ($user->role === 'agent') {
-            $query->where('agent_id', $user->id);
+            $query->where(function ($agentQuery) use ($user) {
+                $agentQuery->where('agent_id', $user->id)
+                    ->orWhereHas('collaborators', function ($collaborationQuery) use ($user) {
+                        $collaborationQuery->where('users.id', $user->id);
+                    });
+            });
         }
 
         $query->where(function ($builder) use ($deep, $like) {

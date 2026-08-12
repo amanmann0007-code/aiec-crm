@@ -11,7 +11,7 @@
             @php
                 $isAgentUser = auth()->user()->role === 'agent';
                 $sourceDefault = old('source', $isAgentUser ? 'Agents' : $customer->source);
-                $agentDefault = old('agent_id', $isAgentUser ? auth()->id() : $customer->agent_id);
+                $agentDefault = old('agent_id', $customer->agent_id);
                 $residenceDefault = old('residence_country', $customer->residence_country ?: 'india');
                 $refusalDefault = old('refusal_countries');
                 $refusalText = is_array($refusalDefault) ? implode(', ', $refusalDefault) : implode(', ', $existingRefusalCountries);
@@ -183,14 +183,14 @@
                 <div class="row g-3">
                     @if($isAgentUser)
                         <input type="hidden" name="source" value="Agents">
-                        <input type="hidden" name="agent_id" value="{{ auth()->id() }}">
+                        <input type="hidden" name="agent_id" value="{{ $customer->agent_id }}">
                         <div class="col-md-4">
                             <label class="form-label">Source</label>
                             <input class="form-control" value="Agents" disabled>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Agent</label>
-                            <input class="form-control" value="{{ auth()->user()->name }}" disabled>
+                            <input class="form-control" value="{{ optional($customer->agent)->name ?: auth()->user()->name }}" disabled>
                         </div>
                     @else
                     <div class="col-md-4">

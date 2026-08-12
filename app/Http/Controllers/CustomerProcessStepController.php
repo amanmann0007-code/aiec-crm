@@ -30,7 +30,7 @@ class CustomerProcessStepController extends Controller
                 && $customer->assigned_counselor_id === Auth::id()
                 && $step['key'] === ProcessTimelineService::DROPOUT_KEY;
             $canAgentReopen = Auth::user()->role === 'agent'
-                && $customer->agent_id === Auth::id();
+                && $this->agentHasAccess($customer);
 
             if (!in_array(Auth::user()->role, ['admin', 'director'], true) && !$canCounselorReopenDropout && !$canAgentReopen) {
                 abort(403, 'Only admin, director, assigned agent, or assigned counselor for Dropout can reopen this process step.');
@@ -97,7 +97,7 @@ class CustomerProcessStepController extends Controller
         }
 
         if ($user->role === 'agent') {
-            if ($customer->agent_id === $user->id) {
+            if ($this->agentHasAccess($customer)) {
                 return;
             }
 
@@ -109,5 +109,14 @@ class CustomerProcessStepController extends Controller
         }
 
         abort(403);
+    }
+
+    private function agentHasAccess(Customer $customer): bool
+    {
+        $user = Auth::user();
+
+        return $user && $user->role === 'agent'
+            && ((int) $customer->agent_id === (int) $user->id
+                || $customer->collaborators()->whereKey($user->id)->exists());
     }
 }

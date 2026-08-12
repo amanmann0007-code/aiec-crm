@@ -93,10 +93,19 @@ class WebDocumentController extends Controller
             return;
         }
 
-        if ($user->role === 'agent' && $customer->agent_id === $user->id) {
+        if ($user->role === 'agent' && $this->agentHasAccess($customer)) {
             return;
         }
 
         abort(403);
+    }
+
+    private function agentHasAccess(Customer $customer): bool
+    {
+        $user = Auth::user();
+
+        return $user && $user->role === 'agent'
+            && ((int) $customer->agent_id === (int) $user->id
+                || $customer->collaborators()->whereKey($user->id)->exists());
     }
 }

@@ -29,10 +29,14 @@ class WebFollowUpController extends Controller
         if (in_array($user->role, ['counselor', 'telecaller', 'agent'], true)) {
             $base->where(function ($query) use ($user) {
                 if ($user->role === 'agent') {
-                    $query->where('user_id', $user->id)
-                        ->whereHas('customer', function ($customerQuery) use ($user) {
-                            $customerQuery->where('agent_id', $user->id);
+                    $query->whereHas('customer', function ($customerQuery) use ($user) {
+                        $customerQuery->where(function ($agentQuery) use ($user) {
+                            $agentQuery->where('agent_id', $user->id)
+                                ->orWhereHas('collaborators', function ($collaborationQuery) use ($user) {
+                                    $collaborationQuery->where('users.id', $user->id);
+                                });
                         });
+                    });
 
                     return;
                 }

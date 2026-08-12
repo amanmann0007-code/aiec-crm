@@ -63,6 +63,13 @@ class User extends Authenticatable
         return $this->hasMany(Customer::class, 'agent_id');
     }
 
+    public function collaboratedCustomers()
+    {
+        return $this->belongsToMany(Customer::class, 'customer_agent_collaborations', 'agent_id', 'customer_id')
+            ->withPivot('added_by')
+            ->withTimestamps();
+    }
+
     public function mentionHandle(): string
     {
         $emailLocalPart = strtolower((string) Str::before($this->email, '@'));

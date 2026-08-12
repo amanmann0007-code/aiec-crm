@@ -99,10 +99,19 @@ class WebCustomerFeeController extends Controller
             return;
         }
 
-        if (Notification::where('user_id', $user->id)->where('customer_id', $customer->id)->exists()) {
+        if ($user->role === 'agent' && $this->agentHasAccess($customer)) {
             return;
         }
 
         abort(403);
+    }
+
+    private function agentHasAccess(Customer $customer): bool
+    {
+        $user = Auth::user();
+
+        return $user && $user->role === 'agent'
+            && ((int) $customer->agent_id === (int) $user->id
+                || $customer->collaborators()->whereKey($user->id)->exists());
     }
 }

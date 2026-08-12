@@ -57,7 +57,12 @@ class AppServiceProvider extends ServiceProvider
                 } elseif ($user->role === 'telecaller') {
                     $query->where('telecaller_id', $user->id);
                 } elseif ($user->role === 'agent') {
-                    $query->where('agent_id', $user->id);
+                    $query->where(function ($agentQuery) use ($user) {
+                        $agentQuery->where('agent_id', $user->id)
+                            ->orWhereHas('collaborators', function ($collaborationQuery) use ($user) {
+                                $collaborationQuery->where('users.id', $user->id);
+                            });
+                    });
                 }
 
                 $newCasesCount = $query->count();
@@ -86,10 +91,14 @@ class AppServiceProvider extends ServiceProvider
                 if (in_array($user->role, ['counselor', 'telecaller', 'agent'], true)) {
                     $followUpQuery->where(function ($query) use ($user) {
                         if ($user->role === 'agent') {
-                            $query->where('user_id', $user->id)
-                                ->whereHas('customer', function ($customerQuery) use ($user) {
-                                    $customerQuery->where('agent_id', $user->id);
+                            $query->whereHas('customer', function ($customerQuery) use ($user) {
+                                $customerQuery->where(function ($agentQuery) use ($user) {
+                                    $agentQuery->where('agent_id', $user->id)
+                                        ->orWhereHas('collaborators', function ($collaborationQuery) use ($user) {
+                                            $collaborationQuery->where('users.id', $user->id);
+                                        });
                                 });
+                            });
 
                             return;
                         }
@@ -100,8 +109,6 @@ class AppServiceProvider extends ServiceProvider
                                     $customerQuery->where('assigned_counselor_id', $user->id);
                                 } elseif ($user->role === 'telecaller') {
                                     $customerQuery->where('telecaller_id', $user->id);
-                                } elseif ($user->role === 'agent') {
-                                    $customerQuery->where('agent_id', $user->id);
                                 }
                             });
                     });

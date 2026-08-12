@@ -22,7 +22,10 @@ class UpdateCustomerRequest extends FormRequest
 
         return $this->user()->role === 'agent'
             && $customer
-            && (int) $customer->agent_id === (int) $this->user()->id;
+            && (
+                (int) $customer->agent_id === (int) $this->user()->id
+                || $customer->collaborators()->whereKey($this->user()->id)->exists()
+            );
     }
 
     protected function prepareForValidation()

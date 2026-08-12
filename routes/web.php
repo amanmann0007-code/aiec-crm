@@ -14,6 +14,7 @@ use App\Http\Controllers\UserMentionController;
 use App\Http\Controllers\WebCustomerFeeController;
 use App\Http\Controllers\WebCustomerEntryController;
 use App\Http\Controllers\WebCustomerController;
+use App\Http\Controllers\WebCustomerCollaborationController;
 use App\Http\Controllers\WebDocumentController;
 use App\Http\Controllers\WebFollowUpController;
 use App\Http\Controllers\WebRemarkController;
@@ -83,6 +84,9 @@ Route::middleware('auth')->group(function () {
         ->name('customers.store-telecaller')
         ->middleware('role:telecaller');
     Route::get('/customers/{customer}', [WebCustomerController::class, 'show'])->name('customers.show');
+    Route::post('/customers/{customer}/collaborations', [WebCustomerCollaborationController::class, 'store'])
+        ->name('customers.collaborations.store')
+        ->middleware('role:agent');
 
     Route::post('/customers/{customer}/special-remark', [WebCustomerController::class, 'storeSpecialRemark'])
         ->name('customers.special-remark.store')

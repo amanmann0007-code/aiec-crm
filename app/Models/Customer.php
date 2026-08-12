@@ -91,6 +91,14 @@ class Customer extends Model
         return $this->belongsTo(User::class, 'agent_id');
     }
 
+    public function collaborators()
+    {
+        return $this->belongsToMany(User::class, 'customer_agent_collaborations', 'customer_id', 'agent_id')
+            ->withPivot('added_by')
+            ->withTimestamps()
+            ->where('users.role', 'agent');
+    }
+
     public function remarks()
     {
         return $this->hasMany(Remark::class);

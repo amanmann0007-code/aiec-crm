@@ -325,8 +325,8 @@ class WebCustomerController extends Controller
         }
         if (Auth::user()->role === 'agent') {
             $validated['source'] = 'Agents';
-            $validated['agent_id'] = Auth::id();
-            $validated['reference_name'] = Auth::user()->name;
+            $validated['agent_id'] = $customer->agent_id;
+            $validated['reference_name'] = optional($customer->agent)->name ?: Auth::user()->name;
             $validated['assigned_counselor_id'] = null;
             $validated['telecaller_id'] = null;
         } elseif (($validated['source'] ?? '') === 'Agents' && empty($validated['agent_id'])) {
@@ -538,6 +538,7 @@ class WebCustomerController extends Controller
             'counselor',
             'telecaller',
             'agent',
+            'collaborators',
             'refusals',
             'remarks' => function ($remarkQuery) {
                 $remarkQuery->latest('id');
@@ -564,21 +565,33 @@ class WebCustomerController extends Controller
         $activityLogs = Auth::user()->role === 'admin' ? $customer->activityLogs : collect();
         $processTimeline = $this->timelineSteps($customer->visa_type);
         $completedProcessSteps = $customer->processSteps->keyBy('step_key');
-        $isAssignedAgent = Auth::user()->role === 'agent' && $customer->agent_id === Auth::id();
+        $isAssignedAgent = Auth::user()->role === 'agent' && $this->agentHasAccess($customer);
         $canViewProcessTimeline = in_array(Auth::user()->role, ['admin', 'director', 'receptionist', 'counselor'], true) || $isAssignedAgent;
         $canCompleteProcessTimeline = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true) || $isAssignedAgent;
         $canReopenProcessTimeline = in_array(Auth::user()->role, ['admin', 'director'], true) || $isAssignedAgent;
         $canAddFees = Auth::user()->role !== 'telecaller';
         $canManageIntake = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id())
-            || (Auth::user()->role === 'agent' && $customer->agent_id === Auth::id());
+            || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
         $canViewSpecialRemark = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true);
         $canAddSpecialRemark = Auth::user()->role === 'counselor'
             && $customer->assigned_counselor_id === Auth::id()
             && trim((string) $customer->special_remark) === '';
         $canViewAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true)
-            || (Auth::user()->role === 'agent' && $customer->agent_id === Auth::id());
+            || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
         $canManageAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true) || $isAssignedAgent;
+        $canManageCollaboration = Auth::user()->role === 'agent' && $isAssignedAgent;
+        $excludedAgentIds = $customer->collaborators->pluck('id')
+            ->push($customer->agent_id)
+            ->push(Auth::id())
+            ->filter()
+            ->unique()
+            ->values();
+        $collaborationAgents = User::where('role', 'agent')
+            ->where('status', 'active')
+            ->whereNotIn('id', $excludedAgentIds)
+            ->orderBy('name')
+            ->get();
 
         return view('customers.show', compact(
             'customer',
@@ -588,12 +601,15 @@ class WebCustomerController extends Controller
             'canViewProcessTimeline',
             'canCompleteProcessTimeline',
             'canReopenProcessTimeline',
+            'isAssignedAgent',
             'canAddFees',
             'canManageIntake',
             'canViewSpecialRemark',
             'canAddSpecialRemark',
             'canViewAgentCommercial',
-            'canManageAgentCommercial'
+            'canManageAgentCommercial',
+            'canManageCollaboration',
+            'collaborationAgents'
         ));
     }
 
@@ -607,7 +623,7 @@ class WebCustomerController extends Controller
         $user = Auth::user();
 
         if (!$user || (in_array($user->role, ['admin', 'director'], true) === false
-            && !($user->role === 'agent' && $customer->agent_id === $user->id))) {
+            && !($user->role === 'agent' && $this->agentHasAccess($customer)))) {
             abort(403);
         }
     }
@@ -630,7 +646,12 @@ class WebCustomerController extends Controller
         } elseif ($user->role === 'telecaller') {
             $query->where('telecaller_id', $user->id);
         } elseif ($user->role === 'agent') {
-            $query->where('agent_id', $user->id);
+            $query->where(function ($agentQuery) use ($user) {
+                $agentQuery->where('agent_id', $user->id)
+                    ->orWhereHas('collaborators', function ($collaborationQuery) use ($user) {
+                        $collaborationQuery->where('users.id', $user->id);
+                    });
+            });
         }
 
         return $query;
@@ -936,7 +957,7 @@ class WebCustomerController extends Controller
             return;
         }
         if ($user->role === 'agent') {
-            if ($customer->agent_id === $user->id) {
+            if ($this->agentHasAccess($customer)) {
                 return;
             }
 
@@ -965,11 +986,23 @@ class WebCustomerController extends Controller
             return;
         }
 
-        if ($user->role === 'agent' && $customer->agent_id === $user->id) {
+        if ($user->role === 'agent' && $this->agentHasAccess($customer)) {
             return;
         }
 
         abort(403);
+    }
+
+    private function agentHasAccess(Customer $customer): bool
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->role !== 'agent') {
+            return false;
+        }
+
+        return (int) $customer->agent_id === (int) $user->id
+            || $customer->collaborators()->whereKey($user->id)->exists();
     }
 
     private function authorizeSpecialRemarkEntry(Customer $customer): void

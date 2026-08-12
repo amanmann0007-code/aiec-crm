@@ -74,7 +74,7 @@
         <div class="card shadow-sm">
             <div class="card-header">Customer Info</div>
             <div class="card-body small">
-                @if(in_array(auth()->user()->role, ['admin', 'counselor', 'director'], true) || (auth()->user()->role === 'agent' && $customer->agent_id === auth()->id()))
+                @if(in_array(auth()->user()->role, ['admin', 'counselor', 'director'], true) || ($isAssignedAgent ?? false))
                     <div class="mb-2">
                         <a href="{{ route('customers.edit', $customer) }}" class="btn btn-sm btn-outline-primary">Edit Customer</a>
                     </div>
@@ -121,7 +121,7 @@
             </div>
         </div>
 
-        @if($canViewAgentCommercial)
+        @if($canViewAgentCommercial && $customer->agent_id)
         <div class="card shadow-sm mt-3">
             <div class="card-header">Agent Commercial Details</div>
             <div class="card-body">
@@ -180,6 +180,44 @@
                             --
                         @endif
                     </p>
+                @endif
+            </div>
+        </div>
+        @endif
+
+        @if($canViewAgentCommercial && $customer->agent_id)
+        <div class="card shadow-sm mt-3">
+            <div class="card-header">Collaborating Agents</div>
+            <div class="card-body">
+                <div class="small mb-2">
+                    <strong>Primary agent:</strong> {{ optional($customer->agent)->name ?? '--' }}
+                </div>
+                @if($customer->collaborators->isNotEmpty())
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @foreach($customer->collaborators as $collaborator)
+                            <span class="badge bg-info text-dark">{{ $collaborator->name }}</span>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-muted small mb-3">No other agents are collaborating on this case.</div>
+                @endif
+                @if($canManageCollaboration)
+                    <form method="POST" action="{{ route('customers.collaborations.store', $customer) }}" class="row g-2 align-items-end">
+                        @csrf
+                        <div class="col-md-8">
+                            <label for="collaboration-agent" class="form-label small">Collaborate with agent</label>
+                            <select name="agent_id" id="collaboration-agent" class="form-select form-select-sm @error('agent_id') is-invalid @enderror" required>
+                                <option value="">Select an agent</option>
+                                @foreach($collaborationAgents as $collaborationAgent)
+                                    <option value="{{ $collaborationAgent->id }}">{{ $collaborationAgent->name }}{{ $collaborationAgent->agent_branch ? ' - ' . $collaborationAgent->agent_branch : '' }}</option>
+                                @endforeach
+                            </select>
+                            @error('agent_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">Collaborate case</button>
+                        </div>
+                    </form>
                 @endif
             </div>
         </div>
