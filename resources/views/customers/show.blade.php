@@ -279,44 +279,6 @@
             </div>
         </div>
 
-        <div class="card shadow-sm mt-3">
-            <div class="card-header">Documents</div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('customers.documents.store', $customer) }}" enctype="multipart/form-data">
-                    @csrf
-                    <div class="mb-2">
-                        <label for="document_name" class="form-label small">Document name *</label>
-                        <input type="text" name="document_name" id="document_name" class="form-control form-control-sm @error('document_name') is-invalid @enderror" value="{{ old('document_name') }}" placeholder="Example: Passport, IELTS scorecard, Offer letter" required>
-                        @error('document_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <label for="document-upload-input" class="document-drop-zone mb-2" id="document-drop-zone">
-                        <input type="file" name="documents[]" id="document-upload-input" class="document-upload-input @error('documents') is-invalid @enderror @error('documents.*') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple required>
-                        <span class="document-drop-icon"><i class="bi bi-cloud-arrow-up"></i></span>
-                        <span class="document-drop-title">Drop files here or click to upload</span>
-                        <span class="document-drop-hint">Allowed: JPG, JPEG, PNG, PDF. Max 20 MB per file.</span>
-                        <span class="document-file-list text-muted" id="document-file-list">No files selected</span>
-                    </label>
-                    @error('documents')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
-                    @error('documents.*')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
-                    <button class="btn btn-sm btn-outline-primary">Upload</button>
-                </form>
-                <ul class="list-group list-group-flush mt-3">
-                    @forelse($customer->documents as $doc)
-                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                            <a href="{{ route('documents.show', $doc) }}" target="_blank">{{ $doc->document_name }}</a>
-                            @if(auth()->user()->role === 'admin')
-                                <form method="POST" action="{{ route('documents.destroy', $doc) }}" onsubmit="return confirm('Delete?')">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                </form>
-                            @endif
-                        </li>
-                    @empty
-                        <li class="text-muted">No documents</li>
-                    @endforelse
-                </ul>
-            </div>
-        </div>
     </div>
 
     <div class="col-lg-8">
@@ -507,6 +469,45 @@
                         </tfoot>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header">Documents</div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('customers.documents.store', $customer) }}" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-2">
+                        <label for="document_name" class="form-label small">Document name *</label>
+                        <input type="text" name="document_name" id="document_name" class="form-control form-control-sm @error('document_name') is-invalid @enderror" value="{{ old('document_name') }}" placeholder="Example: Passport, IELTS scorecard, Offer letter" required>
+                        @error('document_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <label for="document-upload-input" class="document-drop-zone mb-2" id="document-drop-zone">
+                        <input type="file" name="documents[]" id="document-upload-input" class="document-upload-input @error('documents') is-invalid @enderror @error('documents.*') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" multiple required>
+                        <span class="document-drop-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                        <span class="document-drop-title">Drop files here or click to upload</span>
+                        <span class="document-drop-hint">Allowed: JPG, JPEG, PNG, PDF. Max 20 MB per file.</span>
+                        <span class="document-file-list text-muted" id="document-file-list">No files selected</span>
+                    </label>
+                    @error('documents')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                    @error('documents.*')<div class="text-danger small mb-2">{{ $message }}</div>@enderror
+                    <button class="btn btn-sm btn-outline-primary">Upload</button>
+                </form>
+                <ul class="list-group list-group-flush mt-3">
+                    @forelse($customer->documents as $doc)
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <a href="{{ route('documents.show', $doc) }}" target="_blank">{{ $doc->document_name }}</a>
+                            @if(auth()->user()->role === 'admin')
+                                <form method="POST" action="{{ route('documents.destroy', $doc) }}" onsubmit="return confirm('Delete?')">
+                                    @csrf @method('DELETE')
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            @endif
+                        </li>
+                    @empty
+                        <li class="text-muted">No documents</li>
+                    @endforelse
+                </ul>
             </div>
         </div>
 
