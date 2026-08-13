@@ -633,6 +633,7 @@ class WebCustomerController extends Controller
         $user = Auth::user();
         $query = Customer::with([
             'counselor',
+            'agent',
             'nextFollowUp',
             'processSteps' => function ($processQuery) {
                 $processQuery->whereNotNull('completed_at')
