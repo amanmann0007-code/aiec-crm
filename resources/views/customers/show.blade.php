@@ -362,8 +362,15 @@
                             <label for="status_update" class="form-label small">Select status</label>
                             <select name="status_update" id="status_update" class="form-select remark-field-input">
                                 <option value="">—</option>
-                                @foreach(config('crm.remark_statuses', []) as $st)
-                                    <option value="{{ $st }}" {{ old('status_update') == $st ? 'selected' : '' }}>{{ $st }}</option>
+                                @php
+                                    $remarkStatusOptions = collect(config('crm.remark_statuses', []))
+                                        ->push('loan assessment')
+                                        ->filter()
+                                        ->unique()
+                                        ->values();
+                                @endphp
+                                @foreach($remarkStatusOptions as $st)
+                                    <option value="{{ $st }}" {{ old('status_update') == $st ? 'selected' : '' }}>{{ ucwords($st) }}</option>
                                 @endforeach
                             </select>
                             <small class="field-hint text-muted" aria-hidden="true">&nbsp;</small>

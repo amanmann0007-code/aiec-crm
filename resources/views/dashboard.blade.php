@@ -12,7 +12,7 @@
             'assigned' => 'bg-primary',
             'interested' => 'bg-success',
             'pursuing ielts/pte' => 'bg-info text-dark',
-            'loan assessment' => 'bg-info text-dark',
+            'loan assessment' => 'bg-info subtle-bg text-dark',
             'in process' => 'bg-warning text-dark',
             'not eligible' => 'bg-danger',
             'plan drop' => 'bg-dark',

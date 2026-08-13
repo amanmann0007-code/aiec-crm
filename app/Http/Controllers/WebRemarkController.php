@@ -18,9 +18,11 @@ class WebRemarkController extends Controller
 {
     public function store(Request $request, Customer $customer)
     {
+        $remarkStatusOptions = $this->remarkStatusOptions();
+
         $validated = $request->validate([
             'message' => 'required|string',
-            'status_update' => ['nullable', Rule::in(config('crm.remark_statuses', []))],
+            'status_update' => ['nullable', Rule::in($remarkStatusOptions)],
             'follow_up_date' => 'nullable|date',
             'tagged_user_ids' => 'nullable|array',
             'tagged_user_ids.*' => 'exists:users,id',
@@ -94,6 +96,16 @@ class WebRemarkController extends Controller
         ActivityLogger::forCustomer(Auth::id(), 'REMARK', $customer, 'added remark');
 
         return back()->with('success', 'Remark added.');
+    }
+
+    private function remarkStatusOptions(): array
+    {
+        return collect(config('crm.remark_statuses', []))
+            ->push('loan assessment')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function googleChatRemarkMessage(string $actorName, Customer $customer, string $message, ?string $status): string

@@ -44,6 +44,7 @@ return [
         'wv again',
         'pursuing ielts/pte',
         'arranging docs',
+        'loan assessment',
         'in process',
     ],
 
@@ -56,6 +57,7 @@ return [
         'assigned',
         'interested',
         'pursuing ielts/pte',
+        'loan assessment',
         'in process',
         'not eligible',
         'plan drop',
@@ -66,6 +68,7 @@ return [
     'remark_statuses' => [
         'interested',
         'pursuing ielts/pte',
+        'loan assessment',
         'in process',
         'not eligible',
         'plan drop',

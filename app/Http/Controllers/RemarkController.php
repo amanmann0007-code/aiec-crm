@@ -16,9 +16,16 @@ class RemarkController extends Controller
 {
     public function store(Request $request, Customer $customer)
     {
+        $remarkStatusOptions = collect(config('crm.remark_statuses', []))
+            ->push('loan assessment')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
         $validated = $request->validate([
             'message' => 'required|string',
-            'status_update' => ['nullable', Rule::in(config('crm.remark_statuses', []))],
+            'status_update' => ['nullable', Rule::in($remarkStatusOptions)],
             'follow_up_date' => 'nullable|date',
             'tagged_user_ids' => 'nullable|array',
             'tagged_user_ids.*' => 'exists:users,id',
