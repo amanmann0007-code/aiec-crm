@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CustomerController extends Controller
 {
-    private $statusNeedsFollowUp = ['interested', 'wv again', 'pursuing ielts/pte', 'arranging docs', 'in process'];
+    private $statusNeedsFollowUp = ['interested', 'wv again', 'pursuing ielts/pte', 'arranging docs', 'loan assessment', 'in process'];
 
     public function store(StoreCustomerRequest $request)
     {
