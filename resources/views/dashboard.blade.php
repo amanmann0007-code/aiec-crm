@@ -361,7 +361,13 @@
                     <td><a href="{{ route('customers.show', $c) }}">{{ $c->pid }}</a></td>
                     <td>{{ $c->name }}</td>
                     <td><span class="phone-highlight">{{ $c->phone }}</span></td>
-                    <td>{{ $c->source ?: '--' }}</td>
+                    <td>
+                        @if(($user->role ?? null) === 'agent')
+                            {{ optional($c->agent)->name ?? '--' }}
+                        @else
+                            {{ $c->source ?: '--' }}
+                        @endif
+                    </td>
                     <td>
                         @if($latestProcessStep)
                             <span class="badge bg-success process-status-tag">{{ $latestProcessStep->step_label }}</span>

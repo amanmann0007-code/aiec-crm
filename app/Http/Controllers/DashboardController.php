@@ -179,6 +179,7 @@ class DashboardController extends Controller
         $recentCustomers = (clone $customerQuery)
             ->with([
                 'counselor',
+                'agent',
                 'processSteps' => function ($processQuery) {
                     $processQuery->whereNotNull('completed_at')
                         ->orderByDesc('step_order')
