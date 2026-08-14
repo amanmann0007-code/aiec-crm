@@ -286,7 +286,7 @@
             <div class="card shadow-sm mb-3 special-remark-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Special Remark</span>
-                    <span class="small text-muted">Counselor only entry</span>
+                    <span class="small text-muted">Counselor or assigned agent entry</span>
                 </div>
                 <div class="card-body">
                     @if($customer->special_remark)
@@ -388,6 +388,21 @@
                         </div>
                     </div>
                 </form>
+                <div class="d-flex align-items-center gap-2 mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="show-reminder-options">
+                        <i class="bi bi-alarm"></i> Remind
+                    </button>
+                    <form method="POST" action="{{ route('customers.reminders.store', $customer) }}" id="reminder-options" class="d-none align-items-center gap-2">
+                        @csrf
+                        <label for="reminder-hours" class="small text-muted mb-0">After</label>
+                        <select name="hours" id="reminder-hours" class="form-select form-select-sm" style="width: auto;" aria-label="Reminder delay">
+                            @foreach([1, 2, 3, 4, 5] as $hours)
+                                <option value="{{ $hours }}">{{ $hours }} {{ $hours === 1 ? 'hour' : 'hours' }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-warning">Set reminder</button>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -878,6 +893,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const tomorrowDefault = '{{ now()->addDay()->format('Y-m-d') }}';
     const currentMonth = {{ now()->month }};
     const currentYear = {{ now()->year }};
+    const reminderButton = document.getElementById('show-reminder-options');
+    const reminderOptions = document.getElementById('reminder-options');
+
+    reminderButton?.addEventListener('click', function () {
+        reminderOptions?.classList.remove('d-none');
+        reminderOptions?.classList.add('d-flex');
+        reminderButton.classList.add('d-none');
+    });
 
     function updateFollowUpRequirement() {
         if (!statusSelect || !followUpInput) return;

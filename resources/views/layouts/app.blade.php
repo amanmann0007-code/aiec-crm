@@ -415,6 +415,23 @@
     </div>
 </div>
 @endif
+<div class="modal fade" id="notification-reminder-modal" tabindex="-1" aria-labelledby="notification-reminder-title" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title" id="notification-reminder-title">Customer callback reminder</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="notification-reminder-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Dismiss</button>
+                <a href="#" class="btn btn-warning" id="notification-reminder-open">Open customer</a>
+            </div>
+        </div>
+    </div>
+</div>
 @else
     @yield('content')
 @endauth

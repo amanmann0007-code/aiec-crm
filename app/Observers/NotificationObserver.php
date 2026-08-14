@@ -9,6 +9,12 @@ class NotificationObserver
 {
     public function created(Notification $notification): void
     {
+        // A scheduled reminder is sent through the bell when it becomes due.
+        // Sending it here would notify Google Chat immediately when it is created.
+        if ($notification->remind_at && $notification->remind_at->isFuture()) {
+            return;
+        }
+
         $notification->loadMissing(['customer', 'user']);
 
         $recipient = optional($notification->user)->name ?: 'User #' . $notification->user_id;

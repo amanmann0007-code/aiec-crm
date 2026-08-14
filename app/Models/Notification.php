@@ -11,11 +11,12 @@ class Notification extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['user_id', 'customer_id', 'title', 'message', 'is_read'];
+    protected $fillable = ['user_id', 'customer_id', 'title', 'message', 'is_read', 'remind_at'];
 
     protected $casts = [
         'is_read' => 'boolean',
         'created_at' => 'datetime',
+        'remind_at' => 'datetime',
     ];
 
     public function customer()

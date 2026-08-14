@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Notification;
 use App\Models\Remark;
 use App\Models\User;
 use App\Services\ActivityLogger;
@@ -16,6 +17,28 @@ use Illuminate\Validation\Rule;
 
 class WebRemarkController extends Controller
 {
+    public function storeReminder(Request $request, Customer $customer)
+    {
+        $this->authorizeCustomerAccess($customer);
+
+        $validated = $request->validate([
+            'hours' => ['required', 'integer', Rule::in([1, 2, 3, 4, 5])],
+        ]);
+
+        $hours = (int) $validated['hours'];
+        $actor = Auth::user();
+
+        Notification::create([
+            'user_id' => $actor->id,
+            'customer_id' => $customer->id,
+            'title' => 'Customer callback reminder',
+            'message' => "Reminder set by {$actor->name}: call back {$customer->activitySummary()} in {$hours} " . ($hours === 1 ? 'hour' : 'hours') . '.',
+            'remind_at' => now()->addHours($hours),
+        ]);
+
+        return back()->with('success', "Reminder set for {$hours} " . ($hours === 1 ? 'hour' : 'hours') . ' from now.');
+    }
+
     public function store(Request $request, Customer $customer)
     {
         $remarkStatusOptions = $this->remarkStatusOptions();
@@ -118,5 +141,41 @@ class WebRemarkController extends Controller
         ];
 
         return implode("\n", $lines);
+    }
+
+    private function authorizeCustomerAccess(Customer $customer): void
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            abort(403);
+        }
+
+        if (in_array($user->role, ['admin', 'director', 'receptionist'], true)) {
+            return;
+        }
+
+        if ($user->role === 'counselor' && $customer->assigned_counselor_id === $user->id) {
+            return;
+        }
+
+        if ($user->role === 'telecaller' && $customer->telecaller_id === $user->id) {
+            return;
+        }
+
+        if ($user->role === 'agent' && $this->agentHasAccess($customer)) {
+            return;
+        }
+
+        abort(403);
+    }
+
+    private function agentHasAccess(Customer $customer): bool
+    {
+        $user = Auth::user();
+
+        return $user && $user->role === 'agent'
+            && ((int) $customer->agent_id === (int) $user->id
+                || $customer->collaborators()->whereKey($user->id)->exists());
     }
 }

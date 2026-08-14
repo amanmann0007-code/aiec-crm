@@ -573,9 +573,12 @@ class WebCustomerController extends Controller
         $canManageIntake = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id())
             || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
-        $canViewSpecialRemark = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true);
-        $canAddSpecialRemark = Auth::user()->role === 'counselor'
-            && $customer->assigned_counselor_id === Auth::id()
+        $canViewSpecialRemark = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true)
+            || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
+        $canAddSpecialRemark = (
+            (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id())
+            || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer))
+        )
             && trim((string) $customer->special_remark) === '';
         $canViewAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
@@ -1010,9 +1013,19 @@ class WebCustomerController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user || $user->role !== 'counselor' || $customer->assigned_counselor_id !== $user->id) {
+        if (!$user) {
             abort(403);
         }
+
+        if ($user->role === 'counselor' && $customer->assigned_counselor_id === $user->id) {
+            return;
+        }
+
+        if ($user->role === 'agent' && $this->agentHasAccess($customer)) {
+            return;
+        }
+
+        abort(403);
     }
 
     private function notifyAdminsAboutNewCustomer(Customer $customer, User $creator): void

@@ -16,22 +16,30 @@
     let activeLoadRequest = null;
     let pollTimer = null;
     let hasLoadedNotifications = false;
+    let knownNotificationIds = new Set();
     let audioContext = null;
     const pollIntervalMs = 5000;
 
     function renderNotifications(data) {
         const nextUnreadCount = data.unread_count || 0;
         const nextNotificationId = data.last_id || latestNotificationId;
+        const newNotifications = data.notifications.filter((notification) => !knownNotificationIds.has(notification.id));
+        const dueReminders = newNotifications.filter((notification) => notification.reminder_due);
         const hasNewUnreadNotification = hasLoadedNotifications
-            && nextUnreadCount > unreadCount
-            && nextNotificationId > latestNotificationId;
+            && newNotifications.some((notification) => !notification.is_read);
 
         unreadCount = nextUnreadCount;
         latestNotificationId = nextNotificationId;
 
-        if (hasNewUnreadNotification) {
+        if (hasNewUnreadNotification && !dueReminders.length) {
             playNotificationSound();
         }
+
+        if (dueReminders.length) {
+            showReminderPopup(dueReminders[0]);
+        }
+
+        knownNotificationIds = new Set(data.notifications.map((notification) => notification.id));
 
         hasLoadedNotifications = true;
 
@@ -91,6 +99,44 @@
                 }).finally(loadNotifications);
             });
         });
+    }
+
+    function showReminderPopup(notification) {
+        const modalElement = document.getElementById('notification-reminder-modal');
+        if (!modalElement || typeof bootstrap === 'undefined') {
+            return;
+        }
+
+        const shownKey = `aiec.reminder.shown.${notification.id}`;
+        if (sessionStorage.getItem(shownKey) === '1') {
+            return;
+        }
+        sessionStorage.setItem(shownKey, '1');
+
+        const title = document.getElementById('notification-reminder-title');
+        const message = document.getElementById('notification-reminder-message');
+        const open = document.getElementById('notification-reminder-open');
+        if (title) title.textContent = notification.title || 'Reminder';
+        if (message) message.textContent = notification.message || 'A customer reminder is due.';
+        if (open) {
+            open.href = notification.url || '#';
+            open.onclick = () => {
+                if (notification.read_url) {
+                    fetch(notification.read_url, {
+                        method: 'POST',
+                        keepalive: true,
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    }).catch(() => {});
+                }
+            };
+        }
+
+        playNotificationSound();
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
     }
 
     function escapeHtml(str) {

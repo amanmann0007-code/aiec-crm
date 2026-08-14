@@ -14,6 +14,7 @@ class WebFollowUpController extends Controller
         $user = Auth::user();
         $noFollowUpStatuses = config('crm.statuses_no_follow_up', []);
         $base = FollowUp::with([
+            'customer.agent',
             'customer.processSteps' => function ($processQuery) {
                 $processQuery->whereNotNull('completed_at')
                     ->orderByDesc('step_order')
