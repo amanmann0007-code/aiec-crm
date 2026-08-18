@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -11,11 +12,29 @@ class UserMentionController extends Controller
     {
         $q = strtolower(trim($request->query('q', '')));
         $user = $request->user();
+        $customerId = $request->integer('customer_id');
+
+        $allowedAgentIds = null;
+        if ($user && $user->role === 'agent') {
+            $customer = $customerId ? Customer::find($customerId) : null;
+            if (!$customer || !$this->agentHasAccess($customer, $user)) {
+                return response()->json([]);
+            }
+
+            $allowedAgentIds = collect([$customer->agent_id])
+                ->merge($customer->collaborators()->where('users.status', 'active')->pluck('users.id'))
+                ->filter()
+                ->unique()
+                ->values();
+        }
 
         $users = User::query()
             ->where('status', 'active')
             ->when($user && $user->role === 'agent', function ($query) {
-                $query->where('role', 'admin');
+                $query->where('role', 'agent');
+            })
+            ->when($allowedAgentIds !== null, function ($query) use ($allowedAgentIds) {
+                $query->whereIn('id', $allowedAgentIds);
             })
             ->when($q !== '', function ($query) use ($q, $user) {
                 if ($user && $user->role === 'agent') {
@@ -53,5 +72,11 @@ class UserMentionController extends Controller
             ->values();
 
         return response()->json($users);
+    }
+
+    private function agentHasAccess(Customer $customer, User $user): bool
+    {
+        return (int) $customer->agent_id === (int) $user->id
+            || $customer->collaborators()->whereKey($user->id)->exists();
     }
 }

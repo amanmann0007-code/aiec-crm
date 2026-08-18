@@ -13,6 +13,16 @@ class RemarkTagService
     public static function process(Remark $remark, Customer $customer, string $message, array $taggedUserIds, $actor): void
     {
         $ids = collect($taggedUserIds)->filter()->unique()->values();
+        $allowedAgentIds = null;
+
+        if ($actor && $actor->role === 'agent') {
+            $allowedAgentIds = collect([$customer->agent_id])
+                ->merge($customer->collaborators()->where('users.status', 'active')->pluck('users.id'))
+                ->filter()
+                ->unique()
+                ->values();
+            $ids = $ids->intersect($allowedAgentIds);
+        }
 
         preg_match_all('/@([a-zA-Z0-9][a-zA-Z0-9._-]*)/', $message, $matches);
         $handles = collect($matches[1] ?? [])
@@ -40,7 +50,7 @@ class RemarkTagService
             foreach ($handles as $handle) {
                 $matchedUser = $users->first(fn (User $user) => in_array($handle, $user->mentionAliases(), true));
 
-                if ($matchedUser) {
+                if ($matchedUser && ($allowedAgentIds === null || $allowedAgentIds->contains($matchedUser->id))) {
                     $ids->push($matchedUser->id);
                 }
             }
@@ -48,6 +58,11 @@ class RemarkTagService
 
         $taggedUsers = User::whereIn('id', $ids->unique()->values())
             ->where('id', '!=', $actor->id)
+            ->when($allowedAgentIds !== null, function ($query) use ($allowedAgentIds) {
+                $query->where('role', 'agent')
+                    ->where('status', 'active')
+                    ->whereIn('id', $allowedAgentIds);
+            })
             ->get(['id', 'name']);
 
         foreach ($taggedUsers as $taggedUser) {

@@ -842,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const textarea = document.getElementById('remark-message');
     if (textarea) {
         initMentionAutocomplete(textarea, {
-            searchUrl: '{{ route('users.mention-search') }}'
+            searchUrl: '{{ route('users.mention-search', ['customer_id' => $customer->id]) }}'
         });
     }
 

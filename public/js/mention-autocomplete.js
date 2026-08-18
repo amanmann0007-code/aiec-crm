@@ -104,7 +104,8 @@ function initMentionAutocomplete(textarea, options) {
 
         const request = new AbortController();
         activeRequest = request;
-        const url = searchUrl + (query ? '?q=' + encodeURIComponent(query) : '');
+        const separator = searchUrl.includes('?') ? '&' : '?';
+        const url = searchUrl + (query ? separator + 'q=' + encodeURIComponent(query) : '');
         fetch(url, {
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             signal: request.signal,

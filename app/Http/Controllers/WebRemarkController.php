@@ -52,15 +52,17 @@ class WebRemarkController extends Controller
         ]);
 
         if (Auth::user()->role === 'agent' && !empty($validated['tagged_user_ids'])) {
-            $taggedCount = count(array_unique($validated['tagged_user_ids']));
-            $adminTaggedCount = User::whereIn('id', $validated['tagged_user_ids'])
-                ->where('role', 'admin')
+            $taggedUserIds = collect($validated['tagged_user_ids'])->unique()->values();
+            $allowedAgentIds = $this->allowedAgentIds($customer);
+            $allowedTaggedCount = User::whereIn('id', $taggedUserIds)
+                ->whereIn('id', $allowedAgentIds)
+                ->where('role', 'agent')
                 ->where('status', 'active')
                 ->count();
 
-            if ($adminTaggedCount !== $taggedCount) {
+            if ($allowedTaggedCount !== $taggedUserIds->count()) {
                 return back()
-                    ->withErrors(['message' => 'Agents can only tag active admin users.'])
+                    ->withErrors(['message' => 'Agents can only tag active agents collaborating on this case.'])
                     ->withInput();
             }
         }
@@ -177,5 +179,14 @@ class WebRemarkController extends Controller
         return $user && $user->role === 'agent'
             && ((int) $customer->agent_id === (int) $user->id
                 || $customer->collaborators()->whereKey($user->id)->exists());
+    }
+
+    private function allowedAgentIds(Customer $customer)
+    {
+        return collect([$customer->agent_id])
+            ->merge($customer->collaborators()->where('users.status', 'active')->pluck('users.id'))
+            ->filter()
+            ->unique()
+            ->values();
     }
 }
