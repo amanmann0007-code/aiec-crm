@@ -4,6 +4,7 @@
 function initMentionAutocomplete(textarea, options) {
     const searchUrl = options.searchUrl;
     const cacheResults = options.cacheResults !== false;
+    const initialUsers = Array.isArray(options.initialUsers) ? options.initialUsers : [];
     const container = textarea.closest('.mention-wrap');
     const dropdown = container.querySelector('.mention-dropdown');
     const taggedContainer = container.querySelector('.tagged-user-ids');
@@ -94,6 +95,16 @@ function initMentionAutocomplete(textarea, options) {
 
     function fetchUsers(query) {
         const cacheKey = (query || '').toLowerCase();
+
+        if (initialUsers.length) {
+            const localResults = initialUsers.filter((user) => {
+                const name = String(user.name || '').toLowerCase();
+                return !cacheKey || name.startsWith(cacheKey);
+            });
+            renderDropdown(localResults);
+            return;
+        }
+
         if (cacheResults && cache.has(cacheKey)) {
             renderDropdown(cache.get(cacheKey));
             return;

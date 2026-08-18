@@ -843,7 +843,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (textarea) {
         initMentionAutocomplete(textarea, {
             searchUrl: '{{ route('users.mention-search', ['customer_id' => $customer->id]) }}',
-            cacheResults: false
+            cacheResults: false,
+            initialUsers: @json(auth()->user()->role === 'agent'
+                ? $customer->collaborators
+                    ->prepend($customer->agent)
+                    ->filter(fn ($user) => $user && $user->role === 'agent' && $user->status === 'active')
+                    ->unique('id')
+                    ->map(fn ($user) => ['id' => $user->id, 'name' => $user->name, 'role' => $user->role])
+                    ->values()
+                : [])
         });
     }
 
