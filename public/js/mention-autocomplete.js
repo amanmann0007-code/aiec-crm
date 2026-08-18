@@ -3,6 +3,7 @@
  */
 function initMentionAutocomplete(textarea, options) {
     const searchUrl = options.searchUrl;
+    const cacheResults = options.cacheResults !== false;
     const container = textarea.closest('.mention-wrap');
     const dropdown = container.querySelector('.mention-dropdown');
     const taggedContainer = container.querySelector('.tagged-user-ids');
@@ -93,7 +94,7 @@ function initMentionAutocomplete(textarea, options) {
 
     function fetchUsers(query) {
         const cacheKey = (query || '').toLowerCase();
-        if (cache.has(cacheKey)) {
+        if (cacheResults && cache.has(cacheKey)) {
             renderDropdown(cache.get(cacheKey));
             return;
         }
@@ -107,12 +108,15 @@ function initMentionAutocomplete(textarea, options) {
         const separator = searchUrl.includes('?') ? '&' : '?';
         const url = searchUrl + (query ? separator + 'q=' + encodeURIComponent(query) : '');
         fetch(url, {
+            cache: 'no-store',
             headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             signal: request.signal,
         })
             .then((r) => r.json())
             .then((data) => {
-                cache.set(cacheKey, data);
+                if (cacheResults) {
+                    cache.set(cacheKey, data);
+                }
                 renderDropdown(data);
             })
             .catch((error) => {

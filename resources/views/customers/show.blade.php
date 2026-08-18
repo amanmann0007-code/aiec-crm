@@ -836,13 +836,14 @@
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/mention-autocomplete.js') }}"></script>
+<script src="{{ asset('js/mention-autocomplete.js') }}?v={{ filemtime(public_path('js/mention-autocomplete.js')) }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const textarea = document.getElementById('remark-message');
     if (textarea) {
         initMentionAutocomplete(textarea, {
-            searchUrl: '{{ route('users.mention-search', ['customer_id' => $customer->id]) }}'
+            searchUrl: '{{ route('users.mention-search', ['customer_id' => $customer->id]) }}',
+            cacheResults: false
         });
     }
 
