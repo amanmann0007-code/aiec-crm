@@ -286,7 +286,7 @@
             <div class="card shadow-sm mb-3 special-remark-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Special Remark</span>
-                    <span class="small text-muted">Counselor or assigned agent entry</span>
+                    <span class="small text-muted">Counselor only entry</span>
                 </div>
                 <div class="card-body">
                     @if($customer->special_remark)
@@ -360,7 +360,7 @@
                     <div class="remark-actions-row">
                         <div class="remark-col remark-col-status">
                             <label for="status_update" class="form-label small">Select status</label>
-                            <select name="status_update" id="status_update" class="form-select remark-field-input">
+                            <select name="status_update" id="status_update" class="form-select remark-field-input" required>
                                 <option value="">—</option>
                                 @php
                                     $remarkStatusOptions = collect(config('crm.remark_statuses', []))

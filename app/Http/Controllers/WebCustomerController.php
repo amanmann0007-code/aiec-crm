@@ -573,12 +573,9 @@ class WebCustomerController extends Controller
         $canManageIntake = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id())
             || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
-        $canViewSpecialRemark = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true)
-            || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
-        $canAddSpecialRemark = (
-            (Auth::user()->role === 'counselor' && $customer->assigned_counselor_id === Auth::id())
-            || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer))
-        )
+        $canViewSpecialRemark = in_array(Auth::user()->role, ['admin', 'director', 'counselor'], true);
+        $canAddSpecialRemark = Auth::user()->role === 'counselor'
+            && $customer->assigned_counselor_id === Auth::id()
             && trim((string) $customer->special_remark) === '';
         $canViewAgentCommercial = in_array(Auth::user()->role, ['admin', 'director'], true)
             || (Auth::user()->role === 'agent' && $this->agentHasAccess($customer));
@@ -987,10 +984,6 @@ class WebCustomerController extends Controller
         }
 
         if ($user->role === 'counselor' && $customer->assigned_counselor_id === $user->id) {
-            return;
-        }
-
-        if ($user->role === 'agent' && $this->agentHasAccess($customer)) {
             return;
         }
 

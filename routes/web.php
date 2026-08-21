@@ -90,7 +90,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/customers/{customer}/special-remark', [WebCustomerController::class, 'storeSpecialRemark'])
         ->name('customers.special-remark.store')
-        ->middleware('role:counselor,agent');
+        ->middleware('role:counselor');
     Route::post('/customers/{customer}/remarks', [WebRemarkController::class, 'store'])->name('customers.remarks.store');
     Route::post('/customers/{customer}/reminders', [WebRemarkController::class, 'storeReminder'])->name('customers.reminders.store');
     Route::post('/customers/{customer}/fees', [WebCustomerFeeController::class, 'store'])->name('customers.fees.store');

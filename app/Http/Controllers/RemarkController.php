@@ -25,7 +25,7 @@ class RemarkController extends Controller
 
         $validated = $request->validate([
             'message' => 'required|string',
-            'status_update' => ['nullable', Rule::in($remarkStatusOptions)],
+            'status_update' => ['required', Rule::in($remarkStatusOptions)],
             'follow_up_date' => 'nullable|date',
             'tagged_user_ids' => 'nullable|array',
             'tagged_user_ids.*' => 'exists:users,id',
