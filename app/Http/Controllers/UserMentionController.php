@@ -12,7 +12,8 @@ class UserMentionController extends Controller
     {
         $q = strtolower(trim($request->query('q', '')));
         $user = $request->user();
-        $customerId = $request->integer('customer_id');
+        $customerId = (int) $request->query('customer_id');
+        $canTagAnyone = $user && in_array($user->role, ['admin', 'director'], true);
 
         $allowedAgentIds = null;
         if ($user && $user->role === 'agent') {
@@ -29,7 +30,9 @@ class UserMentionController extends Controller
         }
 
         $users = User::query()
-            ->where('status', 'active')
+            ->when(!$canTagAnyone, function ($query) {
+                $query->where('status', 'active');
+            })
             ->when($user && $user->role === 'agent', function ($query) {
                 $query->where('role', 'agent');
             })

@@ -85,24 +85,28 @@ class DashboardController extends Controller
             'last_30' => $this->periodReport($user, 30, $selectedUser),
         ];
 
+        // The process chart is a current snapshot: each case contributes its
+        // latest completed step, regardless of when that step was completed.
         $latestProcessSteps = CustomerProcessStep::query()
             ->whereNotNull('completed_at')
-            ->whereBetween('completed_at', [$fromDate, $toDate])
+            ->whereRaw('customer_process_steps.id = (
+                SELECT cps_latest.id
+                FROM customer_process_steps as cps_latest
+                WHERE cps_latest.customer_id = customer_process_steps.customer_id
+                    AND cps_latest.completed_at IS NOT NULL
+                ORDER BY cps_latest.step_order DESC, cps_latest.completed_at DESC, cps_latest.id DESC
+                LIMIT 1
+            )')
             ->when(!$canViewAllStats || $selectedUser, function ($query) use ($visibleCustomerIds) {
                 $query->whereIn('customer_id', $visibleCustomerIds);
             })
-            ->orderBy('customer_id')
-            ->orderByDesc('step_order')
-            ->orderByDesc('completed_at')
-            ->orderByDesc('id')
             ->get(['customer_id', 'step_label']);
 
         $processTimelineCounts = $latestProcessSteps
-            ->unique('customer_id')
             ->countBy('step_label')
             ->sortDesc();
 
-        $notStartedCount = $visibleCustomerIds->count() - $latestProcessSteps->unique('customer_id')->count();
+        $notStartedCount = $visibleCustomerIds->count() - $latestProcessSteps->count();
         if ($notStartedCount > 0) {
             $processTimelineCounts->put('Not started', $notStartedCount);
             $processTimelineCounts = $processTimelineCounts->sortDesc();

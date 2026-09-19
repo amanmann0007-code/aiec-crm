@@ -194,6 +194,37 @@
         .notification-item:hover { background: #f8f9fa; }
         .notification-item.unread { background: #e7f1ff; }
         #notif-badge { font-size: 10px; min-width: 18px; }
+        #notif-bell-btn.has-unread {
+            border-color: currentColor !important;
+            animation: notification-bell-rainbow 3.2s linear infinite,
+                       notification-bell-pulse 1.6s ease-in-out infinite;
+            will-change: color, box-shadow, transform;
+        }
+        #notif-bell-btn.has-unread .bi-bell {
+            display: inline-block;
+            color: inherit;
+            animation: notification-bell-ring 1.2s ease-in-out infinite;
+            transform-origin: 50% 10%;
+            will-change: transform;
+        }
+        @keyframes notification-bell-rainbow {
+            0%, 100% { color: #ef4444; box-shadow: 0 0 0 .18rem rgba(239, 68, 68, .16); }
+            16% { color: #f97316; box-shadow: 0 0 0 .18rem rgba(249, 115, 22, .16); }
+            33% { color: #eab308; box-shadow: 0 0 0 .18rem rgba(234, 179, 8, .16); }
+            50% { color: #22c55e; box-shadow: 0 0 0 .18rem rgba(34, 197, 94, .16); }
+            66% { color: #06b6d4; box-shadow: 0 0 0 .18rem rgba(6, 182, 212, .16); }
+            83% { color: #3b82f6; box-shadow: 0 0 0 .18rem rgba(59, 130, 246, .16); }
+        }
+        @keyframes notification-bell-ring {
+            0%, 100% { transform: rotate(0deg); }
+            10%, 30%, 50% { transform: rotate(-12deg); }
+            20%, 40%, 60% { transform: rotate(12deg); }
+            70% { transform: rotate(0deg); }
+        }
+        @keyframes notification-bell-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
         .phone-highlight,
         .phone-input-highlight {
             display: inline-block;
@@ -642,7 +673,7 @@
     });
 })();
 </script>
-<script src="{{ asset('js/notifications.js') }}"></script>
+<script src="{{ asset('js/notifications.js') }}?v={{ filemtime(public_path('js/notifications.js')) }}"></script>
 @endauth
 @stack('scripts')
 </body>

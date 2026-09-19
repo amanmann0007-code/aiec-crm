@@ -20,15 +20,27 @@
     let audioContext = null;
     const pollIntervalMs = 5000;
 
+    function setUnreadState(count) {
+        unreadCount = Math.max(0, Number(count) || 0);
+        const hasUnread = unreadCount > 0;
+
+        badge.classList.toggle('d-none', !hasUnread);
+        badge.textContent = hasUnread ? (unreadCount > 99 ? '99+' : unreadCount) : '0';
+        bellBtn.classList.toggle('has-unread', hasUnread);
+        bellBtn.setAttribute('aria-label', hasUnread
+            ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
+            : 'Notifications');
+    }
+
     function renderNotifications(data) {
-        const nextUnreadCount = data.unread_count || 0;
+        const notificationItems = Array.isArray(data.notifications) ? data.notifications : [];
+        const nextUnreadCount = data.unread_count ?? notificationItems.filter((notification) => !notification.is_read).length;
         const nextNotificationId = data.last_id || latestNotificationId;
-        const newNotifications = data.notifications.filter((notification) => !knownNotificationIds.has(notification.id));
+        const newNotifications = notificationItems.filter((notification) => !knownNotificationIds.has(notification.id));
         const dueReminders = newNotifications.filter((notification) => notification.reminder_due);
         const hasNewUnreadNotification = hasLoadedNotifications
             && newNotifications.some((notification) => !notification.is_read);
 
-        unreadCount = nextUnreadCount;
         latestNotificationId = nextNotificationId;
 
         if (hasNewUnreadNotification && !dueReminders.length) {
@@ -39,23 +51,18 @@
             showReminderPopup(dueReminders[0]);
         }
 
-        knownNotificationIds = new Set(data.notifications.map((notification) => notification.id));
+        knownNotificationIds = new Set(notificationItems.map((notification) => notification.id));
 
         hasLoadedNotifications = true;
 
-        if (unreadCount > 0) {
-            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            badge.classList.remove('d-none');
-        } else {
-            badge.classList.add('d-none');
-        }
+        setUnreadState(nextUnreadCount);
 
-        if (!data.notifications.length) {
+        if (!notificationItems.length) {
             list.innerHTML = '<div class="text-center text-muted py-4">No notifications</div>';
             return;
         }
 
-        list.innerHTML = data.notifications.map((n) => `
+        list.innerHTML = notificationItems.map((n) => `
             <a href="${n.url || '#'}" class="notification-item ${n.is_read ? '' : 'unread'}" data-id="${n.id}" data-url="${n.url || ''}" data-read-url="${n.read_url || ''}">
                 <div class="fw-semibold">${escapeHtml(n.title)}</div>
                 <div class="small text-muted">${escapeHtml(n.message)}</div>

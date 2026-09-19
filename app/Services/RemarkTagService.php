@@ -14,6 +14,7 @@ class RemarkTagService
     {
         $ids = collect($taggedUserIds)->filter()->unique()->values();
         $allowedAgentIds = null;
+        $canTagAnyone = $actor && in_array($actor->role, ['admin', 'director'], true);
 
         if ($actor && $actor->role === 'agent') {
             $allowedAgentIds = collect([$customer->agent_id])
@@ -32,7 +33,10 @@ class RemarkTagService
             ->values();
 
         if ($handles->isNotEmpty()) {
-            $users = User::where('status', 'active')
+            $users = User::query()
+                ->when(!$canTagAnyone, function ($query) {
+                    $query->where('status', 'active');
+                })
                 ->where(function ($query) use ($handles) {
                     foreach ($handles as $handle) {
                         $nameProbe = str_replace(['.', '_', '-'], ' ', $handle);
