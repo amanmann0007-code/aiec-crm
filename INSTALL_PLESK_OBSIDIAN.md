@@ -103,6 +103,19 @@ This error means PHP opened a Composer package archive but Windows refused to cr
 
 Do not solve this by running the website as Administrator or granting broad write access to all server users.
 
+### Workaround: upload a production `vendor` ZIP
+
+If the Plesk Composer tool keeps failing but you can write files through Plesk File Manager or FTP, build dependencies on a Windows machine with a compatible PHP version, then upload only `vendor`:
+
+```powershell
+composer install --no-dev --optimize-autoloader --no-interaction
+Compress-Archive -Path .\vendor -DestinationPath "$env:TEMP\aiec-crm-vendor.zip" -Force
+```
+
+Use this repository's `composer.lock` and do not run `composer update`. In Plesk, put the site in maintenance mode, rename the incomplete `vendor` folder, upload `aiec-crm-vendor.zip` to the application root, and extract it there. The archive contains the `vendor` directory, so the result should be `<application-root>\vendor\autoload.php`. Do not upload the whole project archive or your local `.env`.
+
+After extraction, use Plesk's Artisan tool to run `package:discover`, then `optimize:clear` and `config:cache`. Check that the site works before removing the renamed partial folder. If File Manager/FTP extraction also gets `Permission denied`, the server's ACL must be fixed by the hosting provider; copying a ZIP cannot bypass a write restriction on the destination.
+
 ## 5. Initialize the application
 
 Back up the database before applying migrations to an existing site. From the project root, run:
