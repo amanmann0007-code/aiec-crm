@@ -71,6 +71,8 @@ AIEC CRM is a Laravel 8 customer relationship management system for immigration 
 
 ## Local Setup
 
+For Windows hosting on Plesk Obsidian, see [INSTALL_PLESK_OBSIDIAN.md](INSTALL_PLESK_OBSIDIAN.md).
+
 1. Install PHP dependencies:
 
 ```bash
