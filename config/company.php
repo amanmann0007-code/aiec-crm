@@ -1,10 +1,10 @@
 <?php
 
 return [
-    'name' => 'Divinora Global',
-    'crm_name' => 'Divinora CRM',
+    'name' => 'Maan MSEI',
+    'crm_name' => 'MMSEI CRM',
     'tagline' => 'Customer Relationship Management',
-    'subtitle' => 'Study Abroad',
+    'subtitle' => 'INSTITUTIONAL CRM',
     'logo_path' => 'images/divilogo.png',
     'icon_path' => 'images/divilogo.svg',
     'address_lines' => [
@@ -14,5 +14,5 @@ return [
     ],
     'phone' => '',
     'email' => '',
-    'website' => 'https://divinoraglobal.com',
+    'website' => 'https://maanmsei.com',
 ];
