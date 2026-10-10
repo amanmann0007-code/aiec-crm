@@ -1,29 +1,40 @@
 <?php
 
+$courseTypes = [
+    'Study visa',
+    'Visitor Visa',
+    'PR',
+    'Spouse open Work Permit',
+    'Family Sponsorship Permit',
+    'IELTS',
+    'Spoken English',
+    'TOEFL',
+    'Life Skills',
+    'Language Certificate',
+    'PTE',
+    'Closed Work Permit(LMIA)',
+    'Super Visa',
+    'Duolingo',
+    'Interview',
+    'CAIPS/ATIPS',
+    'WES',
+    'Useless Lead',
+    'work permit',
+    'Computer Courses',
+    'Digital Courses',
+];
+
 return [
     'pid_start' => 5000,
 
-    'visa_types' => [
-        'Study visa',
-        'Visitor Visa',
-        'PR',
-        'Spouse open Work Permit',
-        'Family Sponsorship Permit',
-        'IELTS',
-        'Spoken English',
-        'TOEFL',
-        'Life Skills',
-        'Language Certificate',
-        'PTE',
-        'Closed Work Permit(LMIA)',
-        'Super Visa',
-        'Duolingo',
-        'Interview',
-        'CAIPS/ATIPS',
-        'WES',
-        'Useless Lead',
-        'work permit',
-    ],
+    'course_types' => $courseTypes,
+    // Keep the legacy key for process-timeline data and older integrations.
+    'visa_types' => $courseTypes,
+
+    'durations' => array_map(
+        fn ($month) => $month === 1 ? '1 month' : $month . ' months',
+        range(1, 12)
+    ),
 
     'process_timelines' => [
         'Study visa' => [

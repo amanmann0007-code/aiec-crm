@@ -10,8 +10,8 @@
                 <tr>
                     <th>Name</th>
                     <th>Phone</th>
-                    <th>Country</th>
-                    <th>Visa</th>
+                    <th>Duration</th>
+                    <th>Course Type</th>
                     <th>Qualification</th>
                     <th>Submitted</th>
                     <th class="text-end">Action</th>
@@ -22,7 +22,7 @@
                 <tr>
                     <td>{{ $entry->name }}</td>
                     <td><span class="phone-highlight">{{ $entry->phone }}</span></td>
-                    <td>@include('partials.country-flag', ['code' => $entry->country])</td>
+                    <td>{{ in_array($entry->country, config('crm.durations'), true) ? $entry->country : (config('crm.countries')[$entry->country] ?? $entry->country) }}</td>
                     <td>{{ $entry->visa_type }}</td>
                     <td>{{ $entry->qualification ?? '--' }}</td>
                     <td>{{ $entry->created_at->format('d M Y h:i A') }}</td>

@@ -113,11 +113,11 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Visa Type *</label>
+                        <label class="form-label">Course Type *</label>
                         <select name="visa_type" class="form-select @error('visa_type') is-invalid @enderror" required>
                             <option value="">— Select —</option>
-                            @foreach(config('crm.visa_types') as $visa)
-                                <option value="{{ $visa }}" {{ $visaTypeDefault == $visa ? 'selected' : '' }}>{{ $visa }}</option>
+                            @foreach(config('crm.course_types') as $courseType)
+                                <option value="{{ $courseType }}" {{ $visaTypeDefault == $courseType ? 'selected' : '' }}>{{ $courseType }}</option>
                             @endforeach
                         </select>
                         @error('visa_type')
@@ -125,11 +125,14 @@
                         @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Country (Visa) *</label>
+                        <label class="form-label">Duration *</label>
                         <select name="country" class="form-select @error('country') is-invalid @enderror" required>
                             <option value="">— Select —</option>
-                            @foreach(config('crm.countries') as $code => $label)
-                                <option value="{{ $code }}" {{ $countryDefault == $code ? 'selected' : '' }}>{{ $label }}</option>
+                            @if($countryDefault && !in_array($countryDefault, config('crm.durations'), true))
+                                <option value="{{ $countryDefault }}" selected>{{ config('crm.countries')[$countryDefault] ?? $countryDefault }} (legacy value — select a duration)</option>
+                            @endif
+                            @foreach(config('crm.durations') as $duration)
+                                <option value="{{ $duration }}" {{ $countryDefault == $duration ? 'selected' : '' }}>{{ $duration }}</option>
                             @endforeach
                         </select>
                         @error('country')

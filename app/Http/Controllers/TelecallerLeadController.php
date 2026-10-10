@@ -20,8 +20,8 @@ class TelecallerLeadController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:30',
-            'country' => 'required|string|max:255',
-            'visa_type' => 'required|string|max:255',
+            'country' => ['required', Rule::in(config('crm.durations', []))],
+            'visa_type' => ['required', Rule::in(config('crm.course_types', []))],
             'status' => ['required', Rule::in(config('crm.telecaller_statuses', []))],
         ]);
 

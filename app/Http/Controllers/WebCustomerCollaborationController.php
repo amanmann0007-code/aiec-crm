@@ -39,12 +39,12 @@ class WebCustomerCollaborationController extends Controller
         DB::transaction(function () use ($customer, $agent) {
             $customer->collaborators()->attach($agent->id, ['added_by' => Auth::id()]);
 
-            $country = config('crm.countries')[$customer->country] ?? $customer->country ?? 'the case';
+            $duration = $customer->duration_label ?? 'the case';
             Notification::create([
                 'user_id' => $agent->id,
                 'customer_id' => $customer->id,
                 'title' => 'Case collaborated with you',
-                'message' => 'Agent ' . Auth::user()->name . ' has collaborated ' . $customer->name . ' - ' . $country . ' with you.',
+                'message' => 'Agent ' . Auth::user()->name . ' has collaborated ' . $customer->name . ' - ' . $duration . ' with you.',
             ]);
         });
 

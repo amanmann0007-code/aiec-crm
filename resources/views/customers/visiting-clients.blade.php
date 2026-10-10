@@ -11,8 +11,8 @@
                     <th>PID</th>
                     <th>Name</th>
                     <th>Phone</th>
-                    <th>Country</th>
-                    <th>Visa</th>
+                    <th>Duration</th>
+                    <th>Course Type</th>
                     <th>Status</th>
                     <th>Visit Date</th>
                     <th>Telecaller</th>
@@ -27,7 +27,7 @@
                     <td><a href="{{ route('customers.show', $customer) }}">{{ $customer->pid }}</a></td>
                     <td>{{ $customer->name }}</td>
                     <td><span class="phone-highlight">{{ $customer->phone }}</span></td>
-                    <td>@include('partials.country-flag', ['code' => $customer->country])</td>
+                    <td>{{ $customer->duration_label }}</td>
                     <td>{{ $customer->visa_type }}</td>
                     <td><span class="badge bg-warning text-dark">{{ $customer->status }}</span></td>
                     <td>

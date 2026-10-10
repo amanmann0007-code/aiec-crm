@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('page-title', $customer->pid . ' — ' . $customer->name . ' — ' . $customer->country . ' — ' . $customer->visa_type . ' — ' . optional($customer->counselor)->name . ' — ' . optional($customer->telecaller)->name)
+@section('page-title', $customer->pid . ' — ' . $customer->name . ' — ' . $customer->duration_label . ' — ' . $customer->visa_type . ' — ' . optional($customer->counselor)->name . ' — ' . optional($customer->telecaller)->name)
 
 @section('content')
 @if($canViewProcessTimeline)
     <div class="card shadow-sm mb-3 process-timeline-card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Process Timeline</span>
-            <span class="small text-muted">{{ $customer->visa_type ?? 'No visa type selected' }}</span>
+            <span class="small text-muted">{{ $customer->visa_type ?? 'No course type selected' }}</span>
         </div>
         <div class="card-body">
             @if(count($processTimeline))
@@ -63,7 +63,7 @@
                     </div>
                 </div>
             @else
-                <div class="text-muted small">No process timeline configured for this visa type yet.</div>
+                <div class="text-muted small">No process timeline configured for this course type yet.</div>
             @endif
         </div>
     </div>
@@ -93,14 +93,8 @@
                         —
                     @endif
                 </p>
-                <p><strong>Country (visa):</strong>
-                    @if($customer->country)
-                        @include('partials.country-flag', ['code' => $customer->country])
-                    @else
-                        —
-                    @endif
-                </p>
-                <p><strong>Visa:</strong> {{ $customer->visa_type ?? '—' }}</p>
+                <p><strong>Duration:</strong> {{ $customer->duration_label ?? '—' }}</p>
+                <p><strong>Course Type:</strong> {{ $customer->visa_type ?? '—' }}</p>
                 <p><strong>Status:</strong> <span class="badge bg-primary" id="customer-status-badge">{{ $customer->status }}</span></p>
                 @if(auth()->user()->role !== 'agent')
                 <p><strong>Counselor:</strong> {{ optional($customer->counselor)->name ?? '—' }}</p>

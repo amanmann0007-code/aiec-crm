@@ -63,8 +63,14 @@
 <div class="receipt-page">
     <div class="d-flex justify-content-between align-items-start gap-3 border-bottom pb-3 mb-4">
         <div>
-            <img src="{{ asset(config('company.logo_path', 'images/aiec-logo.png')) }}" alt="{{ config('company.name', 'AIEC Institute') }}" class="company-logo mb-2">
+            <img src="{{ asset(config('company.logo_path', 'images/Logo.png')) }}" alt="{{ config('company.name', 'AIEC Institute') }}" class="company-logo mb-2">
             <div class="fw-bold">{{ config('company.name', 'AIEC Institute') }}</div>
+            @if(config('company.crm_name'))
+                <div class="receipt-meta">{{ config('company.crm_name') }}</div>
+            @endif
+            @if(config('company.tagline'))
+                <div class="receipt-meta">{{ config('company.tagline') }}</div>
+            @endif
             @if(config('company.subtitle'))
                 <div class="receipt-meta">{{ config('company.subtitle') }}</div>
             @endif
@@ -100,8 +106,8 @@
         </div>
         <div class="col-md-6">
             <div class="text-muted small">Case Details</div>
-            <div class="receipt-meta">Country: {{ config('crm.countries')[$customer->country] ?? $customer->country ?? '--' }}</div>
-            <div class="receipt-meta">Visa: {{ $customer->visa_type ?? '--' }}</div>
+            <div class="receipt-meta">Duration: {{ $customer->duration_label ?? '--' }}</div>
+            <div class="receipt-meta">Course Type: {{ $customer->visa_type ?? '--' }}</div>
             <div class="receipt-meta">Counselor: {{ optional($customer->counselor)->name ?? '--' }}</div>
         </div>
     </div>

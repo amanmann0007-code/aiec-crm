@@ -83,8 +83,8 @@
                     <th><a href="{{ $sortUrl('name') }}" class="sortable-heading {{ $currentSort === 'name' ? 'active' : '' }}">Name <i class="bi {{ $sortIcon('name') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('phone') }}" class="sortable-heading {{ $currentSort === 'phone' ? 'active' : '' }}">Phone <i class="bi {{ $sortIcon('phone') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('source') }}" class="sortable-heading {{ $currentSort === 'source' ? 'active' : '' }}">Source <i class="bi {{ $sortIcon('source') }}"></i></a></th>
-                    <th><a href="{{ $sortUrl('country') }}" class="sortable-heading {{ $currentSort === 'country' ? 'active' : '' }}">Country <i class="bi {{ $sortIcon('country') }}"></i></a></th>
-                    <th><a href="{{ $sortUrl('visa_type') }}" class="sortable-heading {{ $currentSort === 'visa_type' ? 'active' : '' }}">Visa <i class="bi {{ $sortIcon('visa_type') }}"></i></a></th>
+                    <th><a href="{{ $sortUrl('country') }}" class="sortable-heading {{ $currentSort === 'country' ? 'active' : '' }}">Duration <i class="bi {{ $sortIcon('country') }}"></i></a></th>
+                    <th><a href="{{ $sortUrl('visa_type') }}" class="sortable-heading {{ $currentSort === 'visa_type' ? 'active' : '' }}">Course Type <i class="bi {{ $sortIcon('visa_type') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('process') }}" class="sortable-heading {{ $currentSort === 'process' ? 'active' : '' }}">Process <i class="bi {{ $sortIcon('process') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('status') }}" class="sortable-heading {{ $currentSort === 'status' ? 'active' : '' }}">Status <i class="bi {{ $sortIcon('status') }}"></i></a></th>
                     <th><a href="{{ $sortUrl('follow_up') }}" class="sortable-heading {{ $currentSort === 'follow_up' ? 'active' : '' }}">Next Follow Up <i class="bi {{ $sortIcon('follow_up') }}"></i></a></th>
@@ -125,7 +125,7 @@
                             {{ $c->source ?: '--' }}
                         @endif
                     </td>
-                    <td>@include('partials.country-flag', ['code' => $c->country])</td>
+                    <td>{{ $c->duration_label }}</td>
                     <td>{{ $c->visa_type }}</td>
                     <td>
                         @if($latestProcessStep)

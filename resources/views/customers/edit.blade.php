@@ -80,21 +80,25 @@
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Visa Type *</label>
+                        <label class="form-label">Course Type *</label>
                         <select name="visa_type" class="form-select @error('visa_type') is-invalid @enderror" required>
                             <option value="">— Select —</option>
-                            @foreach(config('crm.visa_types') as $visa)
-                                <option value="{{ $visa }}" {{ old('visa_type', $customer->visa_type) == $visa ? 'selected' : '' }}>{{ $visa }}</option>
+                            @foreach(config('crm.course_types') as $courseType)
+                                <option value="{{ $courseType }}" {{ old('visa_type', $customer->visa_type) == $courseType ? 'selected' : '' }}>{{ $courseType }}</option>
                             @endforeach
                         </select>
                         @error('visa_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Country (Visa) *</label>
+                        <label class="form-label">Duration *</label>
                         <select name="country" class="form-select @error('country') is-invalid @enderror" required>
                             <option value="">— Select —</option>
-                            @foreach(config('crm.countries') as $code => $label)
-                                <option value="{{ $code }}" {{ old('country', $customer->country) == $code ? 'selected' : '' }}>{{ $label }}</option>
+                            @if(old('country', $customer->country) && !in_array(old('country', $customer->country), config('crm.durations'), true))
+                                @php($legacyDuration = old('country', $customer->country))
+                                <option value="{{ $legacyDuration }}" selected>{{ config('crm.countries')[$legacyDuration] ?? $legacyDuration }} (legacy value — select a duration)</option>
+                            @endif
+                            @foreach(config('crm.durations') as $duration)
+                                <option value="{{ $duration }}" {{ old('country', $customer->country) == $duration ? 'selected' : '' }}>{{ $duration }}</option>
                             @endforeach
                         </select>
                         @error('country')<div class="invalid-feedback">{{ $message }}</div>@enderror

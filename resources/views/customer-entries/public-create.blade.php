@@ -80,20 +80,20 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Visa Type *</label>
+                                <label class="form-label">Course Type *</label>
                                 <select name="visa_type" class="form-select" required>
                                     <option value="">Select</option>
-                                    @foreach(config('crm.visa_types') as $visa)
-                                        <option value="{{ $visa }}" {{ old('visa_type') == $visa ? 'selected' : '' }}>{{ $visa }}</option>
+                                    @foreach(config('crm.course_types') as $courseType)
+                                        <option value="{{ $courseType }}" {{ old('visa_type') == $courseType ? 'selected' : '' }}>{{ $courseType }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Country (Visa) *</label>
+                                <label class="form-label">Duration *</label>
                                 <select name="country" class="form-select" required>
                                     <option value="">Select</option>
-                                    @foreach(config('crm.countries') as $code => $label)
-                                        <option value="{{ $code }}" {{ old('country') == $code ? 'selected' : '' }}>{{ $label }}</option>
+                                    @foreach(config('crm.durations') as $duration)
+                                        <option value="{{ $duration }}" {{ old('country') == $duration ? 'selected' : '' }}>{{ $duration }}</option>
                                     @endforeach
                                 </select>
                             </div>

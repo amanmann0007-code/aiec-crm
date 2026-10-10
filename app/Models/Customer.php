@@ -66,14 +66,26 @@ class Customer extends Model
         'margin' => 'decimal:2',
     ];
 
+    public function getDurationLabelAttribute(): ?string
+    {
+        if (!$this->country) {
+            return null;
+        }
+
+        if (in_array($this->country, config('crm.durations', []), true)) {
+            return $this->country;
+        }
+
+        // Old records stored destination country codes in this column.
+        return config('crm.countries')[$this->country] ?? $this->country;
+    }
+
     public function activitySummary(): string
     {
-        $visa = $this->visa_type ?: 'N/A';
-        $country = $this->country
-            ? (config('crm.countries')[$this->country] ?? $this->country)
-            : 'N/A';
+        $courseType = $this->visa_type ?: 'N/A';
+        $duration = $this->duration_label ?: 'N/A';
 
-        return "{$this->name} ({$visa}) {$country} - {$this->pid}";
+        return "{$this->name} ({$courseType}) {$duration} - {$this->pid}";
     }
 
     public function counselor()

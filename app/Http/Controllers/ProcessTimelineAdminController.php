@@ -21,14 +21,14 @@ class ProcessTimelineAdminController extends Controller
 
         return view('process-timelines.index', [
             'stepsByVisaType' => $steps,
-            'visaTypes' => config('crm.visa_types', []),
+            'visaTypes' => config('crm.course_types', []),
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'visa_type' => ['required', 'string', 'max:120', Rule::in(config('crm.visa_types', []))],
+            'visa_type' => ['required', 'string', 'max:120', Rule::in(config('crm.course_types', []))],
             'label' => ['required', 'string', 'max:255'],
             'sort_order' => ['required', 'integer', 'min:1', 'max:999'],
             'is_active' => ['nullable', 'boolean'],
@@ -73,7 +73,7 @@ class ProcessTimelineAdminController extends Controller
         $validated = $request->validate([
             'steps' => ['nullable', 'array'],
             'steps.*.id' => ['nullable', 'integer', 'exists:process_timeline_steps,id'],
-            'steps.*.visa_type' => ['required', 'string', 'max:120', Rule::in(config('crm.visa_types', []))],
+            'steps.*.visa_type' => ['required', 'string', 'max:120', Rule::in(config('crm.course_types', []))],
             'steps.*.label' => ['required', 'string', 'max:255'],
             'steps.*.is_active' => ['nullable', 'boolean'],
         ]);
@@ -87,7 +87,7 @@ class ProcessTimelineAdminController extends Controller
             ->values();
 
         $submittedIds = $steps->pluck('id')->filter()->map(fn ($id) => (int) $id)->values();
-        ProcessTimelineStep::whereIn('visa_type', config('crm.visa_types', []))
+        ProcessTimelineStep::whereIn('visa_type', config('crm.course_types', []))
             ->when($submittedIds->isNotEmpty(), fn ($query) => $query->whereNotIn('id', $submittedIds))
             ->delete();
 

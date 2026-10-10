@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('company.crm_name', 'AIEC CRM'))</title>
-    <link rel="icon" href="{{ asset(config('company.icon_path', 'images/aiec-icon.svg')) }}" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="{{ asset(config('company.logo_path', 'images/aiec-logo.png')) }}">
+    <link rel="icon" href="{{ asset(config('company.icon_path', 'images/Logo.png')) }}">
+    <link rel="apple-touch-icon" href="{{ asset(config('company.logo_path', 'images/Logo.png')) }}">
     <link href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendor/bootstrap-icons/bootstrap-icons.min.css') }}" rel="stylesheet">
     <style>
@@ -247,13 +247,14 @@
             border-color: var(--aiec-blue) !important;
             box-shadow: 0 0 0 .2rem rgba(26,77,143,.18);
         }
-        .login-brand__logo { max-width: 280px; width: 100%; height: auto; }
+        .login-brand__logo { max-width: 160px; max-height: 160px; width: auto; height: auto; object-fit: contain; }
     </style>
     @stack('styles')
 </head>
 <body>
 @auth
 <header class="app-topbar">
+    @include('partials.brand-logo')
     <button type="button" class="btn btn-light border sidebar-toggle-btn" id="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="true">
         <i class="bi bi-list"></i>
     </button>
@@ -549,8 +550,8 @@
 
             const meta = document.createElement('div');
             meta.className = 'search-result-meta';
-            appendMeta(meta, 'Country', c.country);
-            appendMeta(meta, 'Visa', c.visa_type);
+            appendMeta(meta, 'Duration', c.country);
+            appendMeta(meta, 'Course Type', c.visa_type);
             appendMeta(meta, 'Status', c.status);
 
             a.appendChild(title);
@@ -619,8 +620,8 @@
                             title.appendChild(phone);
                             const meta = document.createElement('div');
                             meta.className = 'search-result-meta';
-                            appendMeta(meta, 'Country', c.country);
-                            appendMeta(meta, 'Visa', c.visa_type);
+                            appendMeta(meta, 'Duration', c.country);
+                            appendMeta(meta, 'Course Type', c.visa_type);
                             appendMeta(meta, 'Status', c.status);
                             a.appendChild(title);
                             a.appendChild(meta);

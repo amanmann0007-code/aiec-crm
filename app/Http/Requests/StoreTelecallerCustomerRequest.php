@@ -26,8 +26,8 @@ class StoreTelecallerCustomerRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'phone' => ['required', 'string', 'max:30', Rule::unique('customers', 'phone')],
-            'country' => ['required', Rule::in(array_keys(config('crm.countries')))],
-            'visa_type' => ['required', Rule::in(config('crm.visa_types'))],
+            'country' => ['required', Rule::in(config('crm.durations'))],
+            'visa_type' => ['required', Rule::in(config('crm.course_types'))],
             'status' => ['required', Rule::in(config('crm.telecaller_statuses', []))],
             'visit_date' => ['nullable', 'required_if:status,will visit', 'date', 'after_or_equal:today'],
         ];

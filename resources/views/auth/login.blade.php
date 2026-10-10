@@ -7,6 +7,8 @@
     <div class="row justify-content-center">
         <div class="col-md-5">
             <div class="text-center mb-4">
+                <img src="{{ asset(config('company.logo_path')) }}" alt="{{ config('company.name') }}" class="login-brand__logo mb-3">
+                <div class="fw-semibold">{{ config('company.name') }}</div>
                 <p class="text-muted mb-0">{{ config('company.tagline', 'Customer Relationship Management') }}</p>
             </div>
             <div class="card shadow">
